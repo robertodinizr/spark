@@ -1,36 +1,47 @@
 cmake_minimum_required(VERSION 3.20)
 
-option(SCI_BUILD_TESTS "Build test programs" ON)
+option(KN_BUILD_TESTS "Build test programs" ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(
-  sci
+  kn
   LANGUAGES CXX)
 
-include(cmake/external_libs.cmake)
+include(cmake/cpm.cmake)
+include(cmake/random.cmake)
 
-add_library(sci INTERFACE
-"src/sci.h"
-"src/interpolate/interpolate.h"
+add_library(kn STATIC
+  "src/random/seed.cpp"
+  "src/random/backends/std_mt19937.cpp"
 )
 
-target_include_directories(sci INTERFACE
-"src"
+random_src(kn)
+
+add_library(kn::kn ALIAS kn)
+
+target_include_directories(kn 
+PUBLIC
+  "include"
+PRIVATE
+  "src"
 )
 
-if(SCI_BUILD_TESTS)
+if(KN_BUILD_TESTS)
 
-enable_testing()
-include(CTest)
-include(Catch)
+# CPMAddPackage("gh:catchorg/Catch2@3.5.0")
+# list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
 
-add_subdirectory(tests)
+# enable_testing()
+# include(CTest)
+# include(Catch)
 
-target_link_libraries(sci_tests PRIVATE 
-  sci 
-  Catch2::Catch2WithMain
-)
+# add_subdirectory(tests)
+
+# target_link_libraries(kn_tests PRIVATE 
+#   kn 
+#   Catch2::Catch2WithMain
+# )
 
 endif()
