@@ -1,2 +1,2 @@
-# sci
-C++ scientific toolbox 🧬
+# `kn`
+Kinetic simulation toolbox
