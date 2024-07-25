@@ -1,4 +1,4 @@
-#include "random/random.h"
+#include "kn/random/random.h"
 
 
 #ifdef KN_RANDOM_SEED_USE_TIME_SPLITMIX64

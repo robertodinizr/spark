@@ -1,4 +1,4 @@
-#include "random/random.h"
+#include "kn/random/random.h"
 
 #include <cmath>
 

@@ -1,6 +1,6 @@
 #ifdef KN_RANDOM_USE_SPLITMIX64
 
-#include "random/random.h"
+#include "kn/random/random.h"
 
 namespace _splitmix64
 {

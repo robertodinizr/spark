@@ -1,6 +1,6 @@
 #ifdef KN_RANDOM_USE_STD_MT19937
 
-#include "random/random.h"
+#include "kn/random/random.h"
 
 #include <random>
 

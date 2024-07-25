@@ -1,6 +1,6 @@
 #ifdef KN_RANDOM_USE_XOSHIRO256PLUS
 
-#include "random/random.h"
+#include "kn/random/random.h"
 
 namespace _xoshiro256plus
 {
