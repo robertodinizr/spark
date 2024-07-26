@@ -7,5 +7,7 @@ namespace kn::constants {
 
     // Electron mass [kg]
     constexpr double m_e = 9.1093837139e-31;
-    
+
+    // Pi
+    constexpr double pi = 3.1415926535897932;   
 }
