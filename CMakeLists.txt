@@ -14,7 +14,8 @@ include(cmake/random.cmake)
 
 add_library(kn STATIC
   "src/random/seed.cpp"
-  "src/random/backends/std_mt19937.cpp"
+
+  "src/particle/species.cpp"
 )
 
 random_src(kn)
