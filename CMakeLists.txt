@@ -16,6 +16,8 @@ add_library(kn STATIC
   "src/random/seed.cpp"
 
   "src/particle/species.cpp"
+
+  "src/spatial/grid.cpp"
 )
 
 random_src(kn)
