@@ -15,6 +15,7 @@ include(cmake/random.cmake)
 add_library(kn STATIC
   "src/random/seed.cpp"
   "src/particle/species.cpp"
+  "src/particle/pusher.cpp"
   "src/spatial/grid.cpp"
   "src/interpolate/weight.cpp"
 )
