@@ -16,6 +16,7 @@ add_library(kn STATIC
   "src/random/seed.cpp"
   "src/particle/species.cpp"
   "src/particle/pusher.cpp"
+  "src/particle/boundary.cpp"
   "src/spatial/grid.cpp"
   "src/interpolate/weight.cpp"
   "src/interpolate/field.cpp"
