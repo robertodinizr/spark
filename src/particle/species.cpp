@@ -1,30 +1,30 @@
 #include "kn/particle/species.h"
 
-void kn::particle::ChargedSpecies::add(size_t np) {
+void kn::particle::ChargedSpecies::add(size_t n) {
     
-    vs.resize(n + np);
-    xs.resize(n + np);
-    fs.resize(n + np);
+    m_v.resize(m_n + n);
+    m_x.resize(m_n + n);
+    m_f.resize(m_n + n);
     
-    for(size_t i = n; i < n + np; i++) {
-        vs[i] = 0;
-        xs[i] = 0;
-        fs[i] = 0;
+    for(size_t i = m_n; i < m_n + n; i++) {
+        m_v[i] = 0;
+        m_x[i] = 0;
+        m_f[i] = 0;
     }
 
-    n += np;
+    m_n += n;
 }
 
-void kn::particle::ChargedSpecies::add(size_t np, std::function<void(double&, double&)> sampler) {
+void kn::particle::ChargedSpecies::add(size_t n, std::function<void(double&, double&)> sampler) {
     
-    vs.resize(n + np);
-    xs.resize(n + np);
-    fs.resize(n + np);
+    m_v.resize(m_n + n);
+    m_x.resize(m_n + n);
+    m_f.resize(m_n + n);
     
-    for(size_t i = n; i < n + np; i++) {
-        sampler(vs[i], xs[i]);
-        fs[i] = 0;
+    for(size_t i = m_n; i < m_n + n; i++) {
+        sampler(m_v[i], m_x[i]);
+        m_f[i] = 0;
     }
 
-    n += np;
+    m_n += n;
 }
