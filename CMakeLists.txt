@@ -9,7 +9,7 @@ project(
   kn
   LANGUAGES CXX)
 
-include(cmake/cpm.cmake)
+include(cmake/external.cmake)
 include(cmake/random.cmake)
 
 add_library(kn STATIC
@@ -20,6 +20,7 @@ add_library(kn STATIC
   "src/spatial/grid.cpp"
   "src/interpolate/weight.cpp"
   "src/interpolate/field.cpp"
+  "src/electromagnetics/poisson.cpp"
 )
 
 random_src(kn)
@@ -32,6 +33,8 @@ PUBLIC
 PRIVATE
   "src"
 )
+
+target_link_libraries(kn PRIVATE Eigen)
 
 if(KN_BUILD_TESTS)
 
