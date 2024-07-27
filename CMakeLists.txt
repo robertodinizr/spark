@@ -18,6 +18,7 @@ add_library(kn STATIC
   "src/particle/pusher.cpp"
   "src/spatial/grid.cpp"
   "src/interpolate/weight.cpp"
+  "src/interpolate/field.cpp"
 )
 
 random_src(kn)
