@@ -21,6 +21,7 @@ add_library(kn STATIC
   "src/interpolate/weight.cpp"
   "src/interpolate/field.cpp"
   "src/electromagnetics/poisson.cpp"
+  "src/collisions/mcc.cpp"
 )
 
 random_src(kn)
