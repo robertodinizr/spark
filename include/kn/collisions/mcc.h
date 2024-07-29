@@ -64,7 +64,7 @@ namespace kn::collisions {
 
         double frequency_ratio(const MonteCarloCollisions::CollisionReaction& cs, double kinetic_energy);
 
-        void electron_elastic_coll(particle::ChargedSpecies1D3V& electrons, size_t idx, double kinetic_energy, double ion_mass);
+        void electron_isotropic_coll(particle::ChargedSpecies1D3V& electrons, size_t idx, double vmag, double chi);
     };
 
 }
