@@ -252,6 +252,7 @@ int MonteCarloCollisions::collide_electrons(particle::ChargedSpecies1D3V &electr
                 chi2);
 
             // Generated ion
+            // TODO(lui): Move from std::function to something with better performance
             ions.add(1, [event_pos, ion_mass, neutral_temperature](particle::ChargedSpecies1D3V::Vec3& v, double& x) {
                 x = event_pos;
                 double vtemp = std::sqrt(kn::constants::e * neutral_temperature / ion_mass);
