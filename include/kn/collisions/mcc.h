@@ -63,6 +63,8 @@ namespace kn::collisions {
         double nu_prime_ions_max(const MonteCarloCollisions::CollisionReaction& cs);
 
         double frequency_ratio(const MonteCarloCollisions::CollisionReaction& cs, double kinetic_energy);
+
+        void electron_elastic_coll(particle::ChargedSpecies1D3V& electrons, size_t idx, double kinetic_energy, double ion_mass);
     };
 
 }

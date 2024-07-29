@@ -33,6 +33,15 @@ namespace kn::particle {
     public:
         struct Vec3 {
             double x = 0.0, y = 0.0, z = 0.0;
+            
+            double norm() {
+                return std::sqrt(x * x + y * y + z * z);
+            }
+
+            Vec3 normalized() {
+                double n = norm();
+                return Vec3{x / n, y / n, z / n};
+            }
         };
 
         ChargedSpecies1D3V() = default;

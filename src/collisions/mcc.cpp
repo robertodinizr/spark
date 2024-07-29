@@ -55,6 +55,20 @@ namespace {
     double collision_frequency(double neutral_density, double cross_section, double kinetic_energy, double mass) {
         return neutral_density * cross_section * std::sqrt(2.0 * kn::constants::e * kinetic_energy / mass);
     }
+
+    kn::particle::ChargedSpecies1D3V::Vec3 isotropic_scatter(const kn::particle::ChargedSpecies1D3V& p, size_t idx, double chi) {
+
+        auto vn = p.v()[idx].normalized();
+       
+        double phi = 2 * kn::constants::pi * kn::random::uniform();
+        double zeta = std::acos(vn.z);
+
+        return {
+            vn.x * std::cos(chi) + vn.y * std::sin(chi) * std::sin(phi) / std::sin(zeta) + vn.x * vn.z * std::sin(chi) * std::cos(phi) / std::sin(zeta), 
+            vn.y * std::cos(chi) - vn.x * std::sin(chi) * std::sin(phi) / std::sin(zeta) + vn.y * vn.z * std::sin(chi) * std::cos(phi) / std::sin(zeta),
+            vn.z * std::cos(chi) - (vn.x * vn.x + vn.y * vn.y) * std::sin(chi) * std::cos(phi) / std::sin(zeta)
+        };
+    }
 }
 
 MonteCarloCollisions::MonteCarloCollisions(DomainConfig config, CollisionReaction&& el_cs, std::vector<CollisionReaction>&& exc_cs, CollisionReaction&& iz_cs, CollisionReaction&& iso_cs, CollisionReaction&& bs_cs) : m_config(config) {
@@ -171,7 +185,7 @@ int MonteCarloCollisions::collide_electrons(particle::ChargedSpecies1D3V &electr
         fr0 = 0.0;
         fr1 = frequency_ratio(m_el_cs, kinetic_energy);
         if(r1 <= fr1) {
-            // electron_elastic_coll();
+            electron_elastic_coll(electrons, p_idx, kinetic_energy, ions.m());
             continue;
         }
 
@@ -194,4 +208,14 @@ int MonteCarloCollisions::collide_electrons(particle::ChargedSpecies1D3V &electr
     }
 
     return 0;
+}
+
+void MonteCarloCollisions::electron_elastic_coll(particle::ChargedSpecies1D3V& electrons, size_t idx, double kinetic_energy, double ion_mass) {
+    
+    double chi = std::acos(1.0 - 2.0 * random::uniform());
+    auto vs = isotropic_scatter(electrons, idx, chi);
+    double delta_energy = (2.0 * electrons.m() / ion_mass) * (1.0 - cos(chi));
+    double vmag = std::sqrt(2.0 * kn::constants::e * (kinetic_energy * (1.0 - delta_energy)) / electrons.m());
+
+    electrons.v()[idx] = {vs.x * vmag, vs.y * vmag, vs.z * vmag};
 }
