@@ -28,3 +28,32 @@ void kn::particle::ChargedSpecies::add(size_t n, std::function<void(double&, dou
 
     m_n += n;
 }
+
+void kn::particle::ChargedSpecies1D3V::add(size_t n) {
+    
+    m_v.resize(m_n + n);
+    m_x.resize(m_n + n);
+    m_f.resize(m_n + n);
+    
+    for(size_t i = m_n; i < m_n + n; i++) {
+        m_v[i] = {};
+        m_x[i] = 0.0;
+        m_f[i] = {};
+    }
+
+    m_n += n;
+}
+
+void kn::particle::ChargedSpecies1D3V::add(size_t n, std::function<void(ChargedSpecies1D3V::Vec3&, double&)> sampler) {
+    
+    m_v.resize(m_n + n);
+    m_x.resize(m_n + n);
+    m_f.resize(m_n + n);
+    
+    for(size_t i = m_n; i < m_n + n; i++) {
+        sampler(m_v[i], m_x[i]);
+        m_f[i] = {};
+    }
+
+    m_n += n;
+}

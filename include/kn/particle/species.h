@@ -13,6 +13,7 @@ namespace kn::particle {
         void add(size_t n);
         void add(size_t n, std::function<void(double&, double&)> sampler);
         
+        double m() const { return m_m; }
         double* v() const { return (double*) m_v.data(); };
         double* x() const { return (double*) m_x.data(); };
         double* f() const { return (double*) m_f.data(); };
@@ -22,6 +23,34 @@ namespace kn::particle {
         std::vector<double> m_v;
         std::vector<double> m_x;
         std::vector<double> m_f;
+        size_t m_n = 0;
+
+        double m_q = 0;
+        double m_m = 0;
+    };
+
+    class ChargedSpecies1D3V {
+    public:
+        struct Vec3 {
+            double x = 0.0, y = 0.0, z = 0.0;
+        };
+
+        ChargedSpecies1D3V() = default;
+        ChargedSpecies1D3V(double q, double m) : m_q(q), m_m(m) {}
+        
+        void add(size_t n);
+        void add(size_t n, std::function<void(Vec3&, double&)> sampler);
+
+        double m() const { return m_m; }
+        Vec3* v() const { return (Vec3*) m_v.data(); };
+        double* x() const { return (double*) m_x.data(); };
+        Vec3* f() const { return (Vec3*) m_f.data(); };
+        size_t n() const { return m_n; }
+
+    private:
+        std::vector<Vec3> m_v;
+        std::vector<double> m_x;
+        std::vector<Vec3> m_f;
         size_t m_n = 0;
 
         double m_q = 0;

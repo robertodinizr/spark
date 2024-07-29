@@ -12,7 +12,7 @@
 using namespace kn::collisions;
 
 namespace {
-    double interpolate_cross_section(const MonteCarloCollisions::CrossSection& cs, double energy) {
+    double interpolate_cross_section(const MonteCarloCollisions::CollisionReaction& cs, double energy) {
         if(energy <= cs.energy.front())
             return cs.cross_section.front();
         else if(energy >= cs.energy.back())
@@ -47,12 +47,17 @@ namespace {
         }
     }
 
-    double kinetic_energy_ev(const kn::particle::ChargedSpecies& p, size_t idx) {
-        return 0.0;
+    double kinetic_energy_ev(const kn::particle::ChargedSpecies1D3V& p, size_t idx) {
+        const auto& v = p.v()[idx];
+        return 0.5 * p.m() * (v.x * v.x + v.y * v.y + v.z * v.z);
+    }
+
+    double collision_frequency(double neutral_density, double cross_section, double kinetic_energy, double mass) {
+        return neutral_density * cross_section * std::sqrt(2.0 * kn::constants::e * kinetic_energy / mass);
     }
 }
 
-MonteCarloCollisions::MonteCarloCollisions(DomainConfig config, CrossSection&& el_cs, std::vector<CrossSection>&& exc_cs, CrossSection&& iz_cs, CrossSection&& iso_cs, CrossSection&& bs_cs) : m_config(config) {
+MonteCarloCollisions::MonteCarloCollisions(DomainConfig config, CollisionReaction&& el_cs, std::vector<CollisionReaction>&& exc_cs, CollisionReaction&& iz_cs, CollisionReaction&& iso_cs, CollisionReaction&& bs_cs) : m_config(config) {
 
     // TODO(lui): check how are the move assignment operators implemented by
     // default, to check if this is is being moved correctly without copy. 
@@ -90,7 +95,7 @@ double MonteCarloCollisions::total_cs_ions(double energy) {
     return interpolate_cross_section(m_iso_cs, energy) + interpolate_cross_section(m_bs_cs, energy);
 }
 
-double MonteCarloCollisions::nu_prime_electrons_max(const MonteCarloCollisions::CrossSection &cs) {
+double MonteCarloCollisions::nu_prime_electrons_max(const MonteCarloCollisions::CollisionReaction &cs) {
 
         double nu_prime = 0.0;
         const double rmc = kn::constants::e / kn::constants::m_e;
@@ -105,7 +110,7 @@ double MonteCarloCollisions::nu_prime_electrons_max(const MonteCarloCollisions::
         return nu_prime;
 }
 
-double MonteCarloCollisions::nu_prime_ions_max(const MonteCarloCollisions::CrossSection &cs) {
+double MonteCarloCollisions::nu_prime_ions_max(const MonteCarloCollisions::CollisionReaction &cs) {
 
         double nu_prime = 0.0;
         const double rmc = kn::constants::e / kn::constants::m_e;
@@ -139,7 +144,11 @@ double MonteCarloCollisions::calc_nu_prime_ions() {
     return nu_prime_ions_max(m_iso_cs);
 }
 
-int MonteCarloCollisions::collide_electrons(particle::ChargedSpecies &electrons, particle::ChargedSpecies &ions) {
+double MonteCarloCollisions::frequency_ratio(const CollisionReaction& cs, double kinetic_energy) {
+    return collision_frequency(m_config.m_n_neutral, interpolate_cross_section(m_el_cs, kinetic_energy), kinetic_energy, kn::constants::m_e) / m_nu_prime_e;
+}
+
+int MonteCarloCollisions::collide_electrons(particle::ChargedSpecies1D3V &electrons, particle::ChargedSpecies1D3V &ions) {
 
     double n_null_f = m_p_null_e * (double)electrons.n();
     size_t n_null = (size_t) std::floor(n_null_f);
@@ -148,15 +157,40 @@ int MonteCarloCollisions::collide_electrons(particle::ChargedSpecies &electrons,
     // TODO(lui): check the performance of this sequence generation.
     sample_from_sequence(n_null, electrons.n(), m_particle_samples, m_used_cache);
 
-    double freq_ratio_0 = 0.0;
-	double freq_ratio_1 = 0.0;
+    double fr0 = 0.0;
+	double fr1 = 0.0;
 
     for(size_t i = 0; i < n_null; i++) {
         
         size_t p_idx = m_particle_samples[i];
 
-        double kinetic_energy = 0.0;
-        // TODO(lui): continue implementation.
+        double kinetic_energy = kinetic_energy_ev(electrons, p_idx);
+        double r1 = random::uniform();
+
+        // Elastic collision
+        fr0 = 0.0;
+        fr1 = frequency_ratio(m_el_cs, kinetic_energy);
+        if(r1 <= fr1) {
+            // electron_elastic_coll();
+            continue;
+        }
+
+        // Excitation collisions
+        for(const auto& exc_cs : m_exc_cs) {
+            fr0 = fr1;
+            fr1 += frequency_ratio(exc_cs, kinetic_energy);
+            if(r1 > fr0 && r1 <= fr1 && kinetic_energy > exc_cs.energy_threshold) {
+                // electron_excitation_coll();
+                continue;
+            }
+        }
+
+        fr0 = fr1;
+        fr1 += frequency_ratio(m_iz_cs, kinetic_energy);
+        if(r1 > fr0 && r1 <= fr1 && kinetic_energy >= m_iz_cs.energy_threshold) {
+            //electron_ionization_coll();
+            continue;
+        }
     }
 
     return 0;

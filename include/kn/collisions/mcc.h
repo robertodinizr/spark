@@ -9,7 +9,8 @@ namespace kn::collisions {
     class MonteCarloCollisions {
     public:
         
-        struct CrossSection {
+        struct CollisionReaction {
+            double energy_threshold = 0.0;
             std::vector<double> energy;
             std::vector<double> cross_section;
         };
@@ -20,7 +21,7 @@ namespace kn::collisions {
             double m_n_neutral;
         };
 
-        MonteCarloCollisions(DomainConfig config, CrossSection&& el_cs, std::vector<CrossSection>&& exc_cs, CrossSection&& iz_cs, CrossSection&& iso_cs, CrossSection&& bs_cs);
+        MonteCarloCollisions(DomainConfig config, CollisionReaction&& el_cs, std::vector<CollisionReaction>&& exc_cs, CollisionReaction&& iz_cs, CollisionReaction&& iso_cs, CollisionReaction&& bs_cs);
 
         // Copy constructor and assignment operator deleted
         MonteCarloCollisions(const MonteCarloCollisions&) = delete;
@@ -30,9 +31,9 @@ namespace kn::collisions {
         MonteCarloCollisions(MonteCarloCollisions &&other) noexcept;
         MonteCarloCollisions &operator=(MonteCarloCollisions &&other) noexcept;
 
-        int collide_electrons(particle::ChargedSpecies& electrons, particle::ChargedSpecies& ions);
+        int collide_electrons(particle::ChargedSpecies1D3V& electrons, particle::ChargedSpecies1D3V& ions);
 
-        void collide_ions(particle::ChargedSpecies& ions); 
+        void collide_ions(particle::ChargedSpecies1D3V& ions); 
     
     private:
         double m_nu_prime_e = 0.0, m_nu_prime_i = 0.0;
@@ -41,11 +42,11 @@ namespace kn::collisions {
         std::vector<size_t> m_particle_samples;
         std::unordered_set<size_t> m_used_cache;
 
-        CrossSection m_el_cs;
-        std::vector<CrossSection> m_exc_cs;
-        CrossSection m_iz_cs;
-        CrossSection m_iso_cs; 
-        CrossSection m_bs_cs;
+        CollisionReaction m_el_cs;
+        std::vector<CollisionReaction> m_exc_cs;
+        CollisionReaction m_iz_cs;
+        CollisionReaction m_iso_cs; 
+        CollisionReaction m_bs_cs;
         
         DomainConfig m_config;
 
@@ -58,8 +59,10 @@ namespace kn::collisions {
         double total_cs_electrons(double energy);
         double total_cs_ions(double energy);
 
-        double nu_prime_electrons_max(const MonteCarloCollisions::CrossSection& cs);
-        double nu_prime_ions_max(const MonteCarloCollisions::CrossSection& cs);
+        double nu_prime_electrons_max(const MonteCarloCollisions::CollisionReaction& cs);
+        double nu_prime_ions_max(const MonteCarloCollisions::CollisionReaction& cs);
+
+        double frequency_ratio(const MonteCarloCollisions::CollisionReaction& cs, double kinetic_energy);
     };
 
 }
