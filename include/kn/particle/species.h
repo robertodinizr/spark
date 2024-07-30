@@ -53,13 +53,13 @@ namespace kn::particle {
         double m() const { return m_m; }
         Vec3* v() const { return (Vec3*) m_v.data(); };
         double* x() const { return (double*) m_x.data(); };
-        Vec3* f() const { return (Vec3*) m_f.data(); };
+        double* f() const { return (double*) m_f.data(); };
         size_t n() const { return m_n; }
 
     private:
         std::vector<Vec3> m_v;
         std::vector<double> m_x;
-        std::vector<Vec3> m_f;
+        std::vector<double> m_f;
         size_t m_n = 0;
 
         double m_q = 0;

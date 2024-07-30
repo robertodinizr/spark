@@ -52,7 +52,7 @@ void kn::particle::ChargedSpecies1D3V::add(size_t n, std::function<void(ChargedS
     
     for(size_t i = m_n; i < m_n + n; i++) {
         sampler(m_v[i], m_x[i]);
-        m_f[i] = {};
+        m_f[i] = 0.0;
     }
 
     m_n += n;

@@ -5,7 +5,7 @@ using namespace kn::spatial;
 
 UniformGrid::UniformGrid(double l, size_t n) : 
     m_l(l), m_n(n) {
-            m_dx = l / static_cast<double>(n);
+            m_dx = l / static_cast<double>(n - 1);
             m_data.resize(n);
             set(0.0);
 };
