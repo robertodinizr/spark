@@ -24,8 +24,8 @@ namespace {
 
             double x0 = cs.energy[rhs - 1];
             double x1 = cs.energy[rhs];
-            double y1 = cs.cross_section[rhs - 1];
-            double y0 = cs.cross_section[rhs];
+            double y0 = cs.cross_section[rhs - 1];
+            double y1 = cs.cross_section[rhs];
 
             return y0 + (energy - x0) * (y1 - y0) / (x1 - x0);
         }
@@ -141,7 +141,7 @@ double MonteCarloCollisions::nu_prime_electrons_max(const MonteCarloCollisions::
 double MonteCarloCollisions::nu_prime_ions_max(const MonteCarloCollisions::CollisionReaction &cs) {
 
         double nu_prime = 0.0;
-        const double rmc = kn::constants::e / kn::constants::m_e;
+        const double rmc = kn::constants::e / m_config.m_m_ion;
 
         for (size_t i = 0; i < cs.energy.size(); i++) {
             double energy = cs.energy[i];

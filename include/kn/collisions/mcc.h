@@ -20,6 +20,7 @@ namespace kn::collisions {
             double m_dt, m_m_dx;
             double m_t_neutral;
             double m_n_neutral;
+            double m_m_ion;
         };
 
         MonteCarloCollisions(DomainConfig config, CollisionReaction&& el_cs, std::vector<CollisionReaction>&& exc_cs, CollisionReaction&& iz_cs, CollisionReaction&& iso_cs, CollisionReaction&& bs_cs);
