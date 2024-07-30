@@ -88,3 +88,42 @@ void SymmetricPoissonSolver::grad(std::vector<double> &out) {
     out.assign(e.begin(), e.end());
     out[0] = out.back();
 }
+
+DirichletPoissonSolver::DirichletPoissonSolver(size_t n, double dx) : n(n), dx(dx) {}
+
+void DirichletPoissonSolver::solve(const std::vector<double>& density, std::vector<double>& out, double v0, double v1) {
+    out.resize(n);
+    poisson_thomas(density.data() + 1, out.data() + 1, n - 2, dx, v0, v1);
+    out.front() = v0;
+    out.back()  = v1;
+}
+
+void DirichletPoissonSolver::poisson_thomas(const double *fin, double *yout, int n, double dx, double ylhs, double yrhs) {
+    const double dx2 = dx * dx;
+    double cprime = -0.5;
+
+    yout[0] = (fin[0] * dx2 - ylhs) / -2.0;
+
+    for (int i = 1; i < n - 1; ++i) {
+        yout[i] = (fin[i] * dx2 - yout[i - 1]) / (-2.0 - cprime);
+        cprime = 1.0 / (-2.0 - cprime);
+    }
+
+    yout[n - 1] = ((fin[n - 1] * dx2 - yrhs) - yout[n - 2]) / (-2.0 - cprime);
+
+    for (int i = n - 2; i >= 1; --i) {
+        yout[i] -= cprime * yout[i + 1];
+        cprime = -2.0 - 1.0 / cprime;
+    }
+
+    yout[0] -= -0.5 * yout[1];
+}
+
+void DirichletPoissonSolver::efield_extrapolate(const double *phi, double *eout, int n, double dx) {
+    for (int i = 1; i < n - 1; ++i) {
+        eout[i] = -(phi[i + 1] - phi[i - 1]) / (2.0 * dx);
+    }
+
+    eout[0] = 2 * eout[1] - eout[2];
+    eout[n - 1] = 2 * eout[n - 2] - eout[n - 3];
+}

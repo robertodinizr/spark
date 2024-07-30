@@ -26,4 +26,18 @@ namespace kn::electromagnetics {
         void solve(const std::vector<double>& density, std::vector<double>& out);
         void grad(std::vector<double>& out);
     };
+
+    class DirichletPoissonSolver {
+    public:
+        DirichletPoissonSolver(size_t n, double dx);
+        void solve(const std::vector<double>& density, std::vector<double>& out, double v0, double v1);
+        void grad(std::vector<double>& out);
+
+    private:
+        static void poisson_thomas(const double *fin, double *yout, int n, double dx, double ylhs, double yrhs);
+        static void efield_extrapolate(const double *phi, double *eout, int n, double dx);
+
+        double dx;
+        size_t n;
+    };
 }
