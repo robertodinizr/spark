@@ -105,7 +105,8 @@ void DirichletPoissonSolver::efield(const std::vector<double>& phi, std::vector<
 }
 
 void DirichletPoissonSolver::poisson_thomas(const double *fin, double *yout, int n, double dx, double ylhs, double yrhs) {
-    const double k = dx * dx / kn::constants::eps0;
+    const double poisson_rhs_const = - 1.0 / kn::constants::eps0;
+    const double k = poisson_rhs_const * dx * dx;
     double cprime = -0.5;
 
     yout[0] = (fin[0] * k - ylhs) / -2.0;

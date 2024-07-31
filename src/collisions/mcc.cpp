@@ -173,7 +173,7 @@ double MonteCarloCollisions::calc_nu_prime_ions() {
 }
 
 double MonteCarloCollisions::frequency_ratio(const CollisionReaction& cs, double kinetic_energy) {
-    return collision_frequency(m_config.m_n_neutral, interpolate_cross_section(m_el_cs, kinetic_energy), kinetic_energy, kn::constants::m_e) / m_nu_prime_e;
+    return collision_frequency(m_config.m_n_neutral, interpolate_cross_section(cs, kinetic_energy), kinetic_energy, kn::constants::m_e) / m_nu_prime_e;
 }
 
 void MonteCarloCollisions::isotropic_coll(particle::ChargedSpecies1D3V& species, size_t idx, double vmag, double chi) {
@@ -309,7 +309,7 @@ void MonteCarloCollisions::collide_ions(particle::ChargedSpecies1D3V& ions) {
 
         // Isotropic collision
         fr0 = 0.0;
-        fr1 = collision_frequency(m_config.m_n_neutral, interpolate_cross_section(m_iso_cs, 0.5 * kinetic_energy_rel), kinetic_energy_rel, ions.m());
+        fr1 = collision_frequency(m_config.m_n_neutral, interpolate_cross_section(m_iso_cs, 0.5 * kinetic_energy_rel), kinetic_energy_rel, ions.m()) / m_nu_prime_i;
         if(r1 <= fr1) {
             
             double chi = std::acos(sqrt(1.0 - kn::random::uniform()));
@@ -325,7 +325,7 @@ void MonteCarloCollisions::collide_ions(particle::ChargedSpecies1D3V& ions) {
 
         // Backscattering collision
         fr0 = fr1;
-        fr1 = collision_frequency(m_config.m_n_neutral, interpolate_cross_section(m_bs_cs, 0.5 * kinetic_energy_rel),  kinetic_energy_rel, ions.m());
+        fr1 = collision_frequency(m_config.m_n_neutral, interpolate_cross_section(m_bs_cs, 0.5 * kinetic_energy_rel),  kinetic_energy_rel, ions.m()) / m_nu_prime_i;
         if(r1 > fr0 && r1 <= fr1) {
             vp = v_rand_neutral;
             continue;
