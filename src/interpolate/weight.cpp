@@ -37,4 +37,7 @@ void kn::interpolate::weight_to_grid(const kn::particle::ChargedSpecies1D3V &spe
         g[il] += (xr - xp) / dx;
         g[il + 1] += (xp - xl) / dx;
     }
+
+    g.front() *= 2.0;
+    g.back() *= 2.0;
 }

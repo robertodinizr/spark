@@ -19,4 +19,18 @@ namespace kn::particle {
         }
     }
 
+    void apply_absorbing_boundary(ChargedSpecies1D3V& species, double xmin, double xmax) {
+        
+        size_t n = species.n();
+        double* x = species.x();
+
+        for(size_t i = 0; i < n; i++) {
+            double pos = x[i];
+            if(pos < xmin || pos > xmax) {
+                species.remove(i);
+            } 
+        }
+    }
+
+
 }

@@ -1,4 +1,5 @@
 #include "kn/particle/species.h"
+#include <cstddef>
 
 void kn::particle::ChargedSpecies::add(size_t n) {
     
@@ -56,4 +57,16 @@ void kn::particle::ChargedSpecies1D3V::add(size_t n, std::function<void(ChargedS
     }
 
     m_n += n;
+}
+
+void kn::particle::ChargedSpecies1D3V::remove(size_t idx) {
+    m_v[idx] = m_v.back();
+    m_v.pop_back();
+
+    m_x[idx] = m_x.back();
+    m_x.pop_back();
+
+    m_f.pop_back();
+
+    m_n -= 1;
 }

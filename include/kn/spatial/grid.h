@@ -11,6 +11,7 @@ namespace kn::spatial {
 
         void set(double v);
         std::vector<double>& data();
+        const std::vector<double>& data() const;
         double* data_ptr() const; 
         
         size_t n() const;
@@ -18,6 +19,7 @@ namespace kn::spatial {
         double dx() const;
 
         void apply(double mul, double add);
+
 
     private:
         size_t m_n = 0;

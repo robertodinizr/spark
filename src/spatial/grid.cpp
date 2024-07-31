@@ -18,6 +18,10 @@ std::vector<double>& UniformGrid::data() {
     return m_data;
 }
 
+const std::vector<double>& UniformGrid::data() const {
+    return m_data;
+}
+
 double* UniformGrid::data_ptr() const {
     return (double*) m_data.data();
 }

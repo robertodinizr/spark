@@ -18,6 +18,7 @@ namespace kn::particle {
         double* x() const { return (double*) m_x.data(); };
         double* f() const { return (double*) m_f.data(); };
         size_t n() const { return m_n; }
+        size_t q() const { return m_q; }
 
     private:
         std::vector<double> m_v;
@@ -49,12 +50,14 @@ namespace kn::particle {
         
         void add(size_t n);
         void add(size_t n, std::function<void(Vec3&, double&)> sampler);
+        void remove(size_t idx);
 
         double m() const { return m_m; }
         Vec3* v() const { return (Vec3*) m_v.data(); };
         double* x() const { return (double*) m_x.data(); };
         double* f() const { return (double*) m_f.data(); };
         size_t n() const { return m_n; }
+        size_t q() const { return m_q; }
 
     private:
         std::vector<Vec3> m_v;
