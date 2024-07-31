@@ -49,7 +49,7 @@ namespace {
 
     double kinetic_energy_ev(const kn::particle::ChargedSpecies1D3V& p, size_t idx) {
         const auto& v = p.v()[idx];
-        return 0.5 * p.m() * (v.x * v.x + v.y * v.y + v.z * v.z);
+        return 0.5 * p.m() * (v.x * v.x + v.y * v.y + v.z * v.z) / kn::constants::e;
     }
 
     double collision_frequency(double neutral_density, double cross_section, double kinetic_energy, double mass) {

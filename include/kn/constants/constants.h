@@ -15,4 +15,7 @@ namespace kn::constants {
 
     // Vacuum permittivity [F m^-1]
     constexpr double eps0 = 8.8541878188e-12;
+
+    // Boltzmann constant [J K^-1]
+    constexpr double kb = 1.380649e-23;
 }
