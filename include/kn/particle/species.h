@@ -35,11 +35,11 @@ namespace kn::particle {
         struct Vec3 {
             double x = 0.0, y = 0.0, z = 0.0;
             
-            double norm() {
+            double norm() const {
                 return std::sqrt(x * x + y * y + z * z);
             }
 
-            Vec3 normalized() {
+            Vec3 normalized() const {
                 double n = norm();
                 return Vec3{x / n, y / n, z / n};
             }
@@ -50,6 +50,7 @@ namespace kn::particle {
         
         void add(size_t n);
         void add(size_t n, std::function<void(Vec3&, double&)> sampler);
+        void add_copy(size_t idx);
         void remove(size_t idx);
 
         double m() const { return m_m; }

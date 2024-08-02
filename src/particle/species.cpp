@@ -59,6 +59,13 @@ void kn::particle::ChargedSpecies1D3V::add(size_t n, std::function<void(ChargedS
     m_n += n;
 }
 
+void kn::particle::ChargedSpecies1D3V::add_copy(size_t idx) {
+    m_v.push_back(m_v[idx]);
+    m_x.push_back(m_x[idx]);
+    m_f.push_back(m_f[idx]);
+    m_n++;
+}
+
 void kn::particle::ChargedSpecies1D3V::remove(size_t idx) {
     m_v[idx] = m_v.back();
     m_v.pop_back();

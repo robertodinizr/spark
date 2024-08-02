@@ -56,9 +56,9 @@ namespace {
         return neutral_density * cross_section * std::sqrt(2.0 * kn::constants::e * kinetic_energy / mass);
     }
 
-    kn::particle::ChargedSpecies1D3V::Vec3 isotropic_scatter(const kn::particle::ChargedSpecies1D3V& p, size_t idx, double chi) {
+    kn::particle::ChargedSpecies1D3V::Vec3 isotropic_scatter(const kn::particle::ChargedSpecies1D3V::Vec3& v, double chi) {
 
-        auto vn = p.v()[idx].normalized();
+        auto vn = v.normalized();
        
         double phi = 2 * kn::constants::pi * kn::random::uniform();
         double zeta = std::acos(vn.z);
@@ -177,7 +177,7 @@ double MonteCarloCollisions::frequency_ratio(const CollisionReaction& cs, double
 }
 
 void MonteCarloCollisions::isotropic_coll(particle::ChargedSpecies1D3V& species, size_t idx, double vmag, double chi) {
-    auto vs = isotropic_scatter(species, idx, chi);
+    auto vs = isotropic_scatter(species.v()[idx], chi);
     species.v()[idx] = {vs.x * vmag, vs.y * vmag, vs.z * vmag};
 }
 
@@ -233,13 +233,12 @@ int MonteCarloCollisions::collide_electrons(particle::ChargedSpecies1D3V &electr
         fr1 += frequency_ratio(m_iz_cs, kinetic_energy);
         if(r1 > fr0 && r1 <= fr1 && kinetic_energy >= m_iz_cs.energy_threshold) {
             
-            electrons.add(1);
+            electrons.add_copy(p_idx);
             size_t p_idx_new = electrons.n() - 1;
-            auto* px = electrons.x();
-            auto event_pos = px[p_idx];
+
+            auto event_pos = electrons.x()[p_idx];
             double ion_mass = ions.m();
             double neutral_temperature = m_config.m_t_neutral;
-            px[p_idx_new] = event_pos;
             
             double chi1 = std::acos(1.0 - 2.0 * random::uniform());
             isotropic_coll(
