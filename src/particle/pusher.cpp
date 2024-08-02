@@ -19,7 +19,7 @@ void kn::particle::move_particles(kn::particle::ChargedSpecies1D3V &species, dou
     auto* v = species.v();
     double* x = species.x();
     double* f = species.f();
-    double k = species.q() * dt;
+    double k = species.q() * dt / species.m();
 
     for(size_t i = 0; i < n; i++) {
         v[i].x += f[i] * k;
