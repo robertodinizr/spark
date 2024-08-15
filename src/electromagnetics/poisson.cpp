@@ -127,12 +127,15 @@ void DirichletPoissonSolver::poisson_thomas(const double *fin, double *yout, int
 }
 
 void DirichletPoissonSolver::efield_extrapolate(const double *phi, double *eout, int n, double dx) {
+    const double k = - 1.0 / (2.0 * dx);
+
     for (int i = 1; i < n - 1; ++i) {
-        eout[i] = -(phi[i + 1] - phi[i - 1]) / (2.0 * dx);
+        eout[i] = k * (phi[i + 1] - phi[i - 1]);
     }
 
-    eout[0] = 2 * eout[1] - eout[2];
-    eout[n - 1] = 2 * eout[n - 2] - eout[n - 3];
+    // TODO(lui): check if boundaries are correctly implemented for the benchmark.
+    eout[0] = 2.0 * eout[1] - eout[2];
+    eout[n - 1] = 2.0 * eout[n - 2] - eout[n - 3];
 }
 
 void kn::electromagnetics::charge_density(double particle_weight, const kn::spatial::UniformGrid& ion_density, const kn::spatial::UniformGrid& electron_density, kn::spatial::UniformGrid& out) {
