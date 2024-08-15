@@ -23,6 +23,6 @@ void kn::particle::move_particles(kn::particle::ChargedSpecies1D3V &species, dou
 
     for(size_t i = 0; i < n; i++) {
         v[i].x += f[i] * k;
-        x[i] += v[i].x * dt;
+        x[i]   += v[i].x * dt;
     }
 }

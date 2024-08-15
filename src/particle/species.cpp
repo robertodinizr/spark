@@ -75,5 +75,5 @@ void kn::particle::ChargedSpecies1D3V::remove(size_t idx) {
 
     m_f.pop_back();
 
-    m_n -= 1;
+    m_n--;
 }
