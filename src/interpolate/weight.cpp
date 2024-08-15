@@ -5,6 +5,8 @@ void kn::interpolate::weight_to_grid(const kn::particle::ChargedSpecies &species
     const size_t n = species.n();
     double* x = species.x();
 
+    out.set(0.0);
+
     const double dx = out.dx();
     auto& g = out.data();
 
@@ -23,6 +25,8 @@ void kn::interpolate::weight_to_grid(const kn::particle::ChargedSpecies &species
 void kn::interpolate::weight_to_grid(const kn::particle::ChargedSpecies1D3V &species, kn::spatial::UniformGrid &out) {
     const size_t n = species.n();
     double* x = species.x();
+
+    out.set(0.0);
 
     const double dx = out.dx();
     auto& g = out.data();
