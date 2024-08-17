@@ -24,4 +24,18 @@ namespace kn::random
     {
         return std * normal() + mean;
     }
+
+    // Uniform random number of type T in the range [0, vmax]
+    template <typename T>
+    inline T uniform(T vmax) {
+        return static_cast<T>(kn::random::uniform() * (double) vmax);
+    }
+
+    // Uniform random number of type T in the range [vmin, vmax]
+    template <typename T>
+    inline T uniform(T vmin, T vmax) {
+        return static_cast<T>(kn::random::uniform() * (double) (vmax - vmin)) + vmin;
+    }
+    
+
 }

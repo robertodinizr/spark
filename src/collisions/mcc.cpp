@@ -3,7 +3,6 @@
 #include "kn/particle/species.h"
 #include "kn/random/random.h"
 
-#include <sys/_types/_size_t.h>
 #include <unordered_map>
 #include <utility>
 #include <cmath>
@@ -39,7 +38,7 @@ namespace {
         for(size_t i = 0; i < n; i++) {
             size_t num = 0;
             do {
-                num = kn::random::uniform_u64() % (n + 1);
+                num = kn::random::uniform(range);
             } while(used.find(num) != used.end());
         
             used.insert(num);
