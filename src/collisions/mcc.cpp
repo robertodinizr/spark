@@ -274,14 +274,14 @@ int MonteCarloCollisions::collide_electrons(particle::ChargedSpecies1D3V &electr
 }
 
 void MonteCarloCollisions::collide_ions(particle::ChargedSpecies1D3V& ions) {
-    double n_null_f = m_p_null_e * (double)ions.n();
+    double n_null_f = m_p_null_i * (double)ions.n();
     size_t n_null = (size_t) std::floor(n_null_f);
     n_null = (n_null_f - (double)n_null) > random::uniform() ? n_null + 1 : n_null;
 
     // TODO(lui): check the performance of this sequence generation.
     sample_from_sequence(n_null, ions.n(), m_particle_samples, m_used_cache);
 
-    double vth = std::sqrt(kn::constants::e * m_config.m_t_neutral / ions.m());
+    double vth = std::sqrt(kn::constants::kb * m_config.m_t_neutral / ions.m());
 
     double fr0 = 0.0;
 	double fr1 = 0.0;
@@ -323,7 +323,7 @@ void MonteCarloCollisions::collide_ions(particle::ChargedSpecies1D3V& ions) {
 
         // Backscattering collision
         fr0 = fr1;
-        fr1 = collision_frequency(m_config.m_n_neutral, interpolate_cross_section(m_bs_cs, 0.5 * kinetic_energy_rel),  kinetic_energy_rel, ions.m()) / m_nu_prime_i;
+        fr1 += collision_frequency(m_config.m_n_neutral, interpolate_cross_section(m_bs_cs, 0.5 * kinetic_energy_rel),  kinetic_energy_rel, ions.m()) / m_nu_prime_i;
         if(r1 > fr0 && r1 <= fr1) {
             vp = v_rand_neutral;
             continue;
