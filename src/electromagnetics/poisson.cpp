@@ -136,6 +136,8 @@ void DirichletPoissonSolver::efield_extrapolate(const double *phi, double *eout,
     // TODO(lui): check if boundaries are correctly implemented for the benchmark.
     eout[0] = 2.0 * eout[1] - eout[2];
     eout[n - 1] = 2.0 * eout[n - 2] - eout[n - 3];
+    // eout[0]   = - (phi[1]   - phi[0])   / dx; 
+    // eout[n-1] = - (phi[n-1] - phi[n-2]) / dx; 
 }
 
 void kn::electromagnetics::charge_density(double particle_weight, const kn::spatial::UniformGrid& ion_density, const kn::spatial::UniformGrid& electron_density, kn::spatial::UniformGrid& out) {

@@ -57,20 +57,25 @@ namespace {
 
     kn::particle::ChargedSpecies1D3V::Vec3 isotropic_scatter(const kn::particle::ChargedSpecies1D3V::Vec3& v, double chi) {
 
-        auto vn = v.normalized();
+        const auto vn = v.normalized();
        
-        double phi = 2 * kn::constants::pi * kn::random::uniform();
-        double zeta = std::acos(vn.z);
+        const double phi = 2 * kn::constants::pi * kn::random::uniform();
+        const double zeta = std::acos(vn.z);
+
+        const double k0 = std::cos(chi);
+        const double k1 = std::sin(chi) / std::sin(zeta);
+        const double k2 = k1 * std::sin(phi);
+        const double k3 = k1 * std::cos(phi);
 
         return {
-            vn.x * std::cos(chi) + vn.y * std::sin(chi) * std::sin(phi) / std::sin(zeta) + vn.x * vn.z * std::sin(chi) * std::cos(phi) / std::sin(zeta), 
-            vn.y * std::cos(chi) - vn.x * std::sin(chi) * std::sin(phi) / std::sin(zeta) + vn.y * vn.z * std::sin(chi) * std::cos(phi) / std::sin(zeta),
-            vn.z * std::cos(chi) - (vn.x * vn.x + vn.y * vn.y) * std::sin(chi) * std::cos(phi) / std::sin(zeta)
+            vn.x * k0 +  vn.y * k2 + vn.x * vn.z * k3, 
+            vn.y * k0 -  vn.x * k2 + vn.y * vn.z * k3,
+            vn.z * k0 - (vn.x * vn.x + vn.y * vn.y) * k3
         };
     }
 
     double electron_elastic_vmag(double kinetic_energy, double chi, double ion_mass) {
-        double delta_energy = (2.0 * kn::constants::m_e / ion_mass) * (1.0 - cos(chi));
+        double delta_energy = (2.0 * kn::constants::m_e / ion_mass) * (1.0 - std::cos(chi));
         return std::sqrt(2.0 * kn::constants::e * (kinetic_energy * (1.0 - delta_energy)) / kn::constants::m_e);
     }
 
@@ -216,7 +221,7 @@ int MonteCarloCollisions::collide_electrons(particle::ChargedSpecies1D3V &electr
         for(const auto& exc_cs : m_exc_cs) {
             fr0 = fr1;
             fr1 += frequency_ratio(exc_cs, kinetic_energy);
-            if(r1 > fr0 && r1 <= fr1 && kinetic_energy > exc_cs.energy_threshold) {
+            if(r1 > fr0 && r1 <= fr1 && kinetic_energy >= exc_cs.energy_threshold) {
                 double chi = std::acos(1.0 - 2.0 * random::uniform());
                 isotropic_coll(
                     electrons, 
@@ -238,12 +243,13 @@ int MonteCarloCollisions::collide_electrons(particle::ChargedSpecies1D3V &electr
             auto event_pos = electrons.x()[p_idx];
             double ion_mass = ions.m();
             double neutral_temperature = m_config.m_t_neutral;
-            
+            double vmag = electron_ionization_vmag(kinetic_energy, m_iz_cs.energy_threshold);
+
             double chi1 = std::acos(1.0 - 2.0 * random::uniform());
             isotropic_coll(
                 electrons, 
                 p_idx, 
-                electron_ionization_vmag(kinetic_energy, m_iz_cs.energy_threshold), 
+                vmag, 
                 chi1);
             
             // Generated electron
@@ -251,14 +257,14 @@ int MonteCarloCollisions::collide_electrons(particle::ChargedSpecies1D3V &electr
             isotropic_coll(
                 electrons, 
                 p_idx_new, 
-                electron_ionization_vmag(kinetic_energy, m_iz_cs.energy_threshold), 
+                vmag, 
                 chi2);
 
             // Generated ion
             // TODO(lui): Move from std::function to something with better performance
             ions.add(1, [event_pos, ion_mass, neutral_temperature](particle::ChargedSpecies1D3V::Vec3& v, double& x) {
                 x = event_pos;
-                double vtemp = std::sqrt(kn::constants::e * neutral_temperature / ion_mass);
+                double vtemp = std::sqrt(kn::constants::kb * neutral_temperature / ion_mass);
                 v = { 
                     random::normal(0.0, vtemp),
                     random::normal(0.0, vtemp),

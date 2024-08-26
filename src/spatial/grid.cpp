@@ -43,3 +43,15 @@ void UniformGrid::apply(double mul, double add) {
         m_data[i] = m_data[i] * mul + add;
     }
 }
+
+void AverageGrid::add(const UniformGrid &grid) {
+
+    auto& av = m_average_grid.data();
+    auto& gr = grid.data();
+    
+    for(size_t i = 0; i < m_average_grid.n(); i++) {
+        av[i] = (av[i] * (double)m_count / (double)(m_count + 1)) + (gr[i] / (double)(m_count + 1)); 
+    }
+
+    m_count++;
+}
