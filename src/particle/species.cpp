@@ -45,7 +45,7 @@ void kn::particle::ChargedSpecies1D3V::add(size_t n) {
     m_n += n;
 }
 
-void kn::particle::ChargedSpecies1D3V::add(size_t n, std::function<void(ChargedSpecies1D3V::Vec3&, double&)> sampler) {
+void kn::particle::ChargedSpecies1D3V::add(size_t n, std::function<void(core::Vec3&, double&)> sampler) {
     
     m_v.resize(m_n + n);
     m_x.resize(m_n + n);

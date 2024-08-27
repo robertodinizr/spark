@@ -2,6 +2,7 @@
 #include "kn/constants/constants.h"
 #include "kn/particle/species.h"
 #include "kn/random/random.h"
+#include "kn/core/vec.h"
 
 #include <unordered_map>
 #include <utility>
@@ -55,7 +56,7 @@ namespace {
         return neutral_density * cross_section * std::sqrt(2.0 * kn::constants::e * kinetic_energy / mass);
     }
 
-    kn::particle::ChargedSpecies1D3V::Vec3 isotropic_scatter(const kn::particle::ChargedSpecies1D3V::Vec3& v, double chi) {
+    kn::core::Vec3 isotropic_scatter(const kn::core::Vec3& v, double chi) {
 
         const auto vn = v.normalized();
        
@@ -262,7 +263,7 @@ int MonteCarloCollisions::collide_electrons(particle::ChargedSpecies1D3V &electr
 
             // Generated ion
             // TODO(lui): Move from std::function to something with better performance
-            ions.add(1, [event_pos, ion_mass, neutral_temperature](particle::ChargedSpecies1D3V::Vec3& v, double& x) {
+            ions.add(1, [event_pos, ion_mass, neutral_temperature](core::Vec3& v, double& x) {
                 x = event_pos;
                 double vtemp = std::sqrt(kn::constants::kb * neutral_temperature / ion_mass);
                 v = { 
@@ -296,7 +297,7 @@ void MonteCarloCollisions::collide_ions(particle::ChargedSpecies1D3V& ions) {
 
         size_t p_idx = m_particle_samples[i];
 
-        particle::ChargedSpecies1D3V::Vec3 v_rand_neutral = {
+        core::Vec3 v_rand_neutral = {
             kn::random::normal() * vth,
             kn::random::normal() * vth,
             kn::random::normal() * vth
