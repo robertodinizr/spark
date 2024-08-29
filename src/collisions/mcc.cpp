@@ -88,17 +88,36 @@ namespace {
         // No x2 because of ionization energy division
         return std::sqrt(kn::constants::e * (kinetic_energy - ionization_energy) / kn::constants::m_e);
     }
+
+    double random_chi() {
+        return std::acos(1.0 - 2.0 * kn::random::uniform());
+    }
+
+    double random_chi2() {
+        return std::acos(sqrt(1.0 - kn::random::uniform()));
+    }
 }
 
-MonteCarloCollisions::MonteCarloCollisions(DomainConfig config, CollisionReaction&& el_cs, std::vector<CollisionReaction>&& exc_cs, CollisionReaction&& iz_cs, CollisionReaction&& iso_cs, CollisionReaction&& bs_cs) : m_config(config) {
+MonteCarloCollisions::MonteCarloCollisions(DomainConfig config, std::vector<CollisionReaction>&& cs) : m_config(config) {
 
     // TODO(lui): check how are the move assignment operators implemented by
     // default, to check if this is is being moved correctly without copy. 
-    m_el_cs = std::move(el_cs);
-    m_exc_cs = std::move(exc_cs);
-    m_iz_cs = std::move(iz_cs);
-    m_iso_cs = std::move(iso_cs);
-    m_bs_cs = std::move(bs_cs);
+    // m_el_cs = std::move(el_cs);
+    // m_exc_cs = std::move(exc_cs);
+    // m_iz_cs = std::move(iz_cs);
+    // m_iso_cs = std::move(iso_cs);
+    // m_bs_cs = std::move(bs_cs);
+
+
+    for(auto& reaction : cs)  {
+        if(reaction.projectile == CollisionProjectile::Ion) {
+            m_ion_cs.push_back(std::move(reaction));
+        } else if(reaction.projectile == CollisionProjectile::Electron) {
+            m_electron_cs.push_back(std::move(reaction));
+        }
+    }
+
+
 
     // Initialize the MCC parameters
     init();
@@ -117,15 +136,16 @@ double MonteCarloCollisions::calc_p_null(double nu_prime) {
 
 double MonteCarloCollisions::total_cs_electrons(double energy) {
     double cs = 0.0;
-    cs += interpolate_cross_section(m_el_cs, energy);
-    cs += interpolate_cross_section(m_iz_cs, energy);
-    for(const auto& exc_cs : m_exc_cs)
-        cs += interpolate_cross_section(exc_cs, energy);
+    for(const auto& c : m_electron_cs)
+        cs += interpolate_cross_section(c, energy);
     return cs;
 }
 
 double MonteCarloCollisions::total_cs_ions(double energy) {
-    return interpolate_cross_section(m_iso_cs, energy) + interpolate_cross_section(m_bs_cs, energy);
+    double cs = 0.0;
+    for(const auto& c : m_ion_cs)
+        cs += interpolate_cross_section(c, energy);
+    return cs;
 }
 
 double MonteCarloCollisions::nu_prime_electrons_max(const MonteCarloCollisions::CollisionReaction &cs) {
@@ -164,17 +184,19 @@ double MonteCarloCollisions::calc_nu_prime_electrons() {
     // TODO(lui): it's not necessary to repeat the process for all the 
     // cross sections since only the energy values are evaluated. Refactor
     // later. 
-    nu_prime = std::max(nu_prime, nu_prime_electrons_max(m_el_cs));
-    nu_prime = std::max(nu_prime, nu_prime_electrons_max(m_iz_cs));
-    for(const auto& exc_cs : m_exc_cs)
-        nu_prime = std::max(nu_prime, nu_prime_electrons_max(exc_cs));
+    for(const auto& cs : m_electron_cs)
+        nu_prime = std::max(nu_prime, nu_prime_electrons_max(cs));
 
     return nu_prime;
 }
 
 double MonteCarloCollisions::calc_nu_prime_ions() {
-    // TODO(lui): same as above.
-    return nu_prime_ions_max(m_iso_cs);
+    // TODO(lui): same as above. 
+    // NOT SURE ABOUT THIS!!
+    double nu_prime = 0.0;
+    for(const auto& cs : m_ion_cs)
+        nu_prime = std::max(nu_prime, nu_prime_ions_max(cs));
+    return nu_prime;
 }
 
 double MonteCarloCollisions::frequency_ratio(const CollisionReaction& cs, double kinetic_energy) {
@@ -186,7 +208,68 @@ void MonteCarloCollisions::isotropic_coll(particle::ChargedSpecies1D3V& species,
     species.v()[idx] = {vs.x * vmag, vs.y * vmag, vs.z * vmag};
 }
 
-int MonteCarloCollisions::collide_electrons(particle::ChargedSpecies1D3V &electrons, particle::ChargedSpecies1D3V &ions) {
+bool MonteCarloCollisions::electron_elastic_coll(particle::ChargedSpecies1D3V &electrons,
+                                     particle::ChargedSpecies1D3V &ions,
+                                     size_t p_idx, double kinetic_energy) {
+    double chi = random_chi();
+    isotropic_coll(electrons, p_idx,electron_elastic_vmag(kinetic_energy, chi, ions.m()), chi);
+    return true;
+}
+
+bool MonteCarloCollisions::electron_excitation_coll(
+    particle::ChargedSpecies1D3V &electrons, particle::ChargedSpecies1D3V &ions,
+    size_t p_idx, double kinetic_energy, double threshold) {
+    
+    if(kinetic_energy < threshold)
+        return false;
+    
+    double chi = std::acos(1.0 - 2.0 * random::uniform());
+    isotropic_coll(
+        electrons, p_idx,
+        electron_excitation_vmag(kinetic_energy, threshold), chi);
+    return true;
+}
+
+bool MonteCarloCollisions::electron_ionization_coll(
+    particle::ChargedSpecies1D3V &electrons, particle::ChargedSpecies1D3V &ions,
+    size_t p_idx, double kinetic_energy, double threshold) {
+
+    if (kinetic_energy < threshold)
+        return false;
+
+    electrons.add_copy(p_idx);
+    size_t p_idx_new = electrons.n() - 1;
+
+    auto event_pos = electrons.x()[p_idx];
+    double ion_mass = ions.m();
+    double neutral_temperature = m_config.m_t_neutral;
+    double vmag =
+        electron_ionization_vmag(kinetic_energy, threshold);
+
+    double chi1 = std::acos(1.0 - 2.0 * random::uniform());
+    isotropic_coll(electrons, p_idx, vmag, chi1);
+
+    // Generated electron
+    double chi2 = std::acos(1.0 - 2.0 * random::uniform());
+    isotropic_coll(electrons, p_idx_new, vmag, chi2);
+
+    // Generated ion
+    // TODO(lui): Move from std::function to something with better performance
+    ions.add(1, [event_pos, ion_mass, neutral_temperature](core::Vec3 &v,
+                                                           double &x) {
+      x = event_pos;
+      double vtemp =
+          std::sqrt(kn::constants::kb * neutral_temperature / ion_mass);
+      v = {random::normal(0.0, vtemp), random::normal(0.0, vtemp),
+           random::normal(0.0, vtemp)};
+    });
+
+    return true;
+}
+
+int MonteCarloCollisions::collide_electrons(
+    particle::ChargedSpecies1D3V &electrons,
+    particle::ChargedSpecies1D3V &ions) {
 
     double n_null_f = m_p_null_e * (double)electrons.n();
     size_t n_null = (size_t) std::floor(n_null_f);
@@ -205,82 +288,61 @@ int MonteCarloCollisions::collide_electrons(particle::ChargedSpecies1D3V &electr
         double kinetic_energy = kinetic_energy_ev(electrons, p_idx);
         double r1 = random::uniform();
 
-        // Elastic collision
         fr0 = 0.0;
-        fr1 = frequency_ratio(m_el_cs, kinetic_energy);
-        if(r1 <= fr1) {
-            double chi = std::acos(1.0 - 2.0 * random::uniform());
-            isotropic_coll(
-                electrons, 
-                p_idx, 
-                electron_elastic_vmag(kinetic_energy, chi, ions.m()), 
-                chi);
-            continue;
-        }
+        fr1 = 0.0;
 
-        // Excitation collisions
-        for(const auto& exc_cs : m_exc_cs) {
+        bool collided = false;
+
+        for(const auto& cs: m_electron_cs) {
             fr0 = fr1;
-            fr1 += frequency_ratio(exc_cs, kinetic_energy);
-            if(r1 > fr0 && r1 <= fr1 && kinetic_energy >= exc_cs.energy_threshold) {
-                double chi = std::acos(1.0 - 2.0 * random::uniform());
-                isotropic_coll(
-                    electrons, 
-                    p_idx, 
-                    electron_excitation_vmag(kinetic_energy, exc_cs.energy_threshold), 
-                    chi);
-                continue;
+            fr1 += frequency_ratio(cs, kinetic_energy);
+            
+            if(r1 > fr0 && r1 <= fr1) {
+                
+                switch (cs.type) {    
+                    case CollisionType::Ionization: {
+                        collided = electron_ionization_coll(electrons, ions, p_idx, kinetic_energy, cs.energy_threshold);
+                        break;
+                    }
+                    case CollisionType::Excitation: {
+                        collided = electron_excitation_coll(electrons, ions, p_idx, kinetic_energy, cs.energy_threshold);
+                        break;
+                    }
+                    
+                    case CollisionType::Elastic: {
+                        collided = electron_elastic_coll(electrons, ions, p_idx, kinetic_energy);
+                        break;
+                    }
+
+                    default:
+                        collided = false;
+                        break;
+                }
             }
-        }
 
-        // Ionization collisions
-        fr0 = fr1;
-        fr1 += frequency_ratio(m_iz_cs, kinetic_energy);
-        if(r1 > fr0 && r1 <= fr1 && kinetic_energy >= m_iz_cs.energy_threshold) {
-            
-            electrons.add_copy(p_idx);
-            size_t p_idx_new = electrons.n() - 1;
-
-            auto event_pos = electrons.x()[p_idx];
-            double ion_mass = ions.m();
-            double neutral_temperature = m_config.m_t_neutral;
-            double vmag = electron_ionization_vmag(kinetic_energy, m_iz_cs.energy_threshold);
-
-            double chi1 = std::acos(1.0 - 2.0 * random::uniform());
-            isotropic_coll(
-                electrons, 
-                p_idx, 
-                vmag, 
-                chi1);
-            
-            // Generated electron
-            double chi2 = std::acos(1.0 - 2.0 * random::uniform());
-            isotropic_coll(
-                electrons, 
-                p_idx_new, 
-                vmag, 
-                chi2);
-
-            // Generated ion
-            // TODO(lui): Move from std::function to something with better performance
-            ions.add(1, [event_pos, ion_mass, neutral_temperature](core::Vec3& v, double& x) {
-                x = event_pos;
-                double vtemp = std::sqrt(kn::constants::kb * neutral_temperature / ion_mass);
-                v = { 
-                    random::normal(0.0, vtemp),
-                    random::normal(0.0, vtemp),
-                    random::normal(0.0, vtemp)
-                };
-            });
-
-            continue;
+            if(collided)
+                break;
         }
     }
 
     return 0;
 }
 
-void MonteCarloCollisions::collide_ions(particle::ChargedSpecies1D3V& ions) {
+bool MonteCarloCollisions::ions_isotropic_coll(particle::ChargedSpecies1D3V &ions,
+                                     size_t p_idx,
+                                     double kinetic_energy_rel) {
+    double chi = random_chi2();
+    double cos_chi = std::cos(chi);
+    double vmag =
+        std::sqrt(2.0 * kn::constants::e *
+                  (kinetic_energy_rel * cos_chi * cos_chi) / ions.m());
+    isotropic_coll(ions, p_idx, vmag, chi);
+
+    return true;
+}
+
+
+void MonteCarloCollisions::collide_ions(particle::ChargedSpecies1D3V &ions) {
     double n_null_f = m_p_null_i * (double)ions.n();
     size_t n_null = (size_t) std::floor(n_null_f);
     n_null = (n_null_f - (double)n_null) > random::uniform() ? n_null + 1 : n_null;
@@ -312,35 +374,41 @@ void MonteCarloCollisions::collide_ions(particle::ChargedSpecies1D3V& ions) {
 
         double r1 = kn::random::uniform();
 
-        // Isotropic collision
+
         fr0 = 0.0;
-        fr1 = collision_frequency(m_config.m_n_neutral, interpolate_cross_section(m_iso_cs, 0.5 * kinetic_energy_rel), kinetic_energy_rel, ions.m()) / m_nu_prime_i;
-        if(r1 <= fr1) {
-            
-            double chi = std::acos(sqrt(1.0 - kn::random::uniform()));
-            double cos_chi = std::cos(chi);
-            double vmag = std::sqrt(2.0 * kn::constants::e * (kinetic_energy_rel * cos_chi * cos_chi) / ions.m());
-            isotropic_coll(ions, p_idx, vmag, chi);
+        fr1 = 0.0;
 
-            vp.x += v_rand_neutral.x;
-            vp.y += v_rand_neutral.y;
-            vp.z += v_rand_neutral.z;
-            continue;
-        }
+        bool collided = false;
 
-        // Backscattering collision
-        fr0 = fr1;
-        fr1 += collision_frequency(m_config.m_n_neutral, interpolate_cross_section(m_bs_cs, 0.5 * kinetic_energy_rel),  kinetic_energy_rel, ions.m()) / m_nu_prime_i;
-        if(r1 > fr0 && r1 <= fr1) {
-            vp = v_rand_neutral;
-            continue;
-        }
+        for(const auto& cs : m_ion_cs) {
+            fr0 = fr1;
+            fr1 += collision_frequency(m_config.m_n_neutral, interpolate_cross_section(cs, 0.5 * kinetic_energy_rel),  kinetic_energy_rel, ions.m()) / m_nu_prime_i;
 
-        // Null collision
-        if(r1 > fr1) {
-            vp.x += v_rand_neutral.x;
-            vp.y += v_rand_neutral.y;
-            vp.z += v_rand_neutral.z;
+            if(r1 > fr0 && r1 <= fr1) {
+                
+                switch (cs.type) {    
+                    case CollisionType::Isotropic: {
+                        ions_isotropic_coll(ions, p_idx, kinetic_energy_rel);
+                        break;
+                    }
+                    case CollisionType::Backscattering: {
+                        vp = core::Vec3();
+                        collided = true;
+                        break;
+                    }
+                    
+                    default:
+                        break;
+                }
+            }
+
+            if(collided)
+                break;
+
         }
+     
+        vp.x += v_rand_neutral.x;
+        vp.y += v_rand_neutral.y;
+        vp.z += v_rand_neutral.z;
     }
 }

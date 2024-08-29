@@ -9,11 +9,26 @@ namespace kn::collisions {
 
     class MonteCarloCollisions {
     public:
+
+        enum class CollisionProjectile {
+            Ion,
+            Electron
+        };
+
+        enum class CollisionType { 
+            Ionization,
+            Excitation,
+            Elastic,
+            Isotropic,
+            Backscattering
+        };
         
         struct CollisionReaction {
             double energy_threshold = 0.0;
             std::vector<double> energy;
             std::vector<double> cross_section;
+            CollisionType type;
+            CollisionProjectile projectile;
         };
 
         struct DomainConfig {
@@ -23,7 +38,7 @@ namespace kn::collisions {
             double m_m_ion;
         };
 
-        MonteCarloCollisions(DomainConfig config, CollisionReaction&& el_cs, std::vector<CollisionReaction>&& exc_cs, CollisionReaction&& iz_cs, CollisionReaction&& iso_cs, CollisionReaction&& bs_cs);
+        MonteCarloCollisions(DomainConfig config, std::vector<CollisionReaction>&& cs);
 
         // Copy constructor and assignment operator deleted
         MonteCarloCollisions(const MonteCarloCollisions&) = delete;
@@ -33,22 +48,20 @@ namespace kn::collisions {
         MonteCarloCollisions(MonteCarloCollisions &&other) noexcept;
         MonteCarloCollisions &operator=(MonteCarloCollisions &&other) noexcept;
 
-        int collide_electrons(particle::ChargedSpecies1D3V& electrons, particle::ChargedSpecies1D3V& ions);
+        int collide_electrons(particle::ChargedSpecies1D3V &electrons,
+                              particle::ChargedSpecies1D3V &ions);
 
-        void collide_ions(particle::ChargedSpecies1D3V& ions); 
-    
-    private:
+        void collide_ions(particle::ChargedSpecies1D3V &ions);
+
+      private:
         double m_nu_prime_e = 0.0, m_nu_prime_i = 0.0;
         double m_p_null_e = 0.0, m_p_null_i = 0.0;
 
         std::vector<size_t> m_particle_samples;
         std::unordered_set<size_t> m_used_cache;
 
-        CollisionReaction m_el_cs;
-        std::vector<CollisionReaction> m_exc_cs;
-        CollisionReaction m_iz_cs;
-        CollisionReaction m_iso_cs; 
-        CollisionReaction m_bs_cs;
+        std::vector<CollisionReaction> m_electron_cs;
+        std::vector<CollisionReaction> m_ion_cs;
         
         DomainConfig m_config;
 
@@ -67,6 +80,21 @@ namespace kn::collisions {
         double frequency_ratio(const MonteCarloCollisions::CollisionReaction& cs, double kinetic_energy);
 
         void isotropic_coll(particle::ChargedSpecies1D3V& species, size_t idx, double vmag, double chi);
+
+        bool electron_elastic_coll(particle::ChargedSpecies1D3V &electrons,
+                                     particle::ChargedSpecies1D3V &ions,
+                                     size_t p_idx, double kinetic_energy);
+        
+        bool electron_excitation_coll(particle::ChargedSpecies1D3V &electrons,
+                                     particle::ChargedSpecies1D3V &ions,
+                                     size_t p_idx, double kinetic_energy, double threshold);
+
+        bool electron_ionization_coll(particle::ChargedSpecies1D3V &electrons,
+                                     particle::ChargedSpecies1D3V &ions,
+                                     size_t p_idx, double kinetic_energy, double threshold);
+
+        bool ions_isotropic_coll(particle::ChargedSpecies1D3V &ions, size_t p_idx,
+                       double kinetic_energy_rel);
     };
 
 }
