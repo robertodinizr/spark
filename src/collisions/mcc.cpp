@@ -12,7 +12,7 @@
 using namespace kn::collisions;
 
 namespace {
-    double interpolate_cross_section(const MonteCarloCollisions::CollisionReaction& cs, double energy) {
+    double interpolate_cross_section(const CollisionReaction& cs, double energy) {
         if(energy <= cs.energy.front())
             return cs.cross_section.front();
         else if(energy >= cs.energy.back())
@@ -47,7 +47,8 @@ namespace {
         }
     }
 
-    double kinetic_energy_ev(const kn::particle::ChargedSpecies<1, 3>& p, size_t idx) {
+    template <unsigned NX>
+    double kinetic_energy_ev(const kn::particle::ChargedSpecies<NX, 3>& p, size_t idx) {
         const auto& v = p.v()[idx];
         return 0.5 * p.m() * (v.x * v.x + v.y * v.y + v.z * v.z) / kn::constants::e;
     }
@@ -98,7 +99,8 @@ namespace {
     }
 }
 
-MonteCarloCollisions::MonteCarloCollisions(DomainConfig config, std::vector<CollisionReaction>&& cs) : m_config(config) {
+template <unsigned NX>
+MonteCarloCollisions<NX>::MonteCarloCollisions(DomainConfig config, std::vector<CollisionReaction>&& cs) : m_config(config) {
 
     // TODO(lui): check how are the move assignment operators implemented by
     // default, to check if this is is being moved correctly without copy. 
@@ -123,32 +125,37 @@ MonteCarloCollisions::MonteCarloCollisions(DomainConfig config, std::vector<Coll
     init();
 }
 
-void MonteCarloCollisions::init() {   
+template <unsigned NX>
+void MonteCarloCollisions<NX>::init() {   
     m_nu_prime_e = calc_nu_prime_electrons();
     m_p_null_e = calc_p_null(m_nu_prime_e);
     m_nu_prime_i = calc_nu_prime_ions();
     m_p_null_i = calc_p_null(m_nu_prime_i);
 }
 
-double MonteCarloCollisions::calc_p_null(double nu_prime) {
+template <unsigned NX>
+double MonteCarloCollisions<NX>::calc_p_null(double nu_prime) {
     return 1.0 - std::exp(-nu_prime * m_config.m_dt);
 }
 
-double MonteCarloCollisions::total_cs_electrons(double energy) {
+template <unsigned NX>
+double MonteCarloCollisions<NX>::total_cs_electrons(double energy) {
     double cs = 0.0;
     for(const auto& c : m_electron_cs)
         cs += interpolate_cross_section(c, energy);
     return cs;
 }
 
-double MonteCarloCollisions::total_cs_ions(double energy) {
+template <unsigned NX>
+double MonteCarloCollisions<NX>::total_cs_ions(double energy) {
     double cs = 0.0;
     for(const auto& c : m_ion_cs)
         cs += interpolate_cross_section(c, energy);
     return cs;
 }
 
-double MonteCarloCollisions::nu_prime_electrons_max(const MonteCarloCollisions::CollisionReaction &cs) {
+template <unsigned NX>
+double MonteCarloCollisions<NX>::nu_prime_electrons_max(const CollisionReaction &cs) {
 
         double nu_prime = 0.0;
         const double rmc = kn::constants::e / kn::constants::m_e;
@@ -163,7 +170,8 @@ double MonteCarloCollisions::nu_prime_electrons_max(const MonteCarloCollisions::
         return nu_prime;
 }
 
-double MonteCarloCollisions::nu_prime_ions_max(const MonteCarloCollisions::CollisionReaction &cs) {
+template <unsigned NX>
+double MonteCarloCollisions<NX>::nu_prime_ions_max(const CollisionReaction &cs) {
 
         double nu_prime = 0.0;
         const double rmc = kn::constants::e / m_config.m_m_ion;
@@ -178,7 +186,8 @@ double MonteCarloCollisions::nu_prime_ions_max(const MonteCarloCollisions::Colli
         return nu_prime;
 }
 
-double MonteCarloCollisions::calc_nu_prime_electrons() {
+template <unsigned NX>
+double MonteCarloCollisions<NX>::calc_nu_prime_electrons() {
     double nu_prime = 0.0;
 
     // TODO(lui): it's not necessary to repeat the process for all the 
@@ -190,7 +199,8 @@ double MonteCarloCollisions::calc_nu_prime_electrons() {
     return nu_prime;
 }
 
-double MonteCarloCollisions::calc_nu_prime_ions() {
+template <unsigned NX>
+double MonteCarloCollisions<NX>::calc_nu_prime_ions() {
     // TODO(lui): same as above. 
     // NOT SURE ABOUT THIS!!
     double nu_prime = 0.0;
@@ -199,25 +209,29 @@ double MonteCarloCollisions::calc_nu_prime_ions() {
     return nu_prime;
 }
 
-double MonteCarloCollisions::frequency_ratio(const CollisionReaction& cs, double kinetic_energy) {
+template <unsigned NX>
+double MonteCarloCollisions<NX>::frequency_ratio(const CollisionReaction& cs, double kinetic_energy) {
     return collision_frequency(m_config.m_n_neutral, interpolate_cross_section(cs, kinetic_energy), kinetic_energy, kn::constants::m_e) / m_nu_prime_e;
 }
 
-void MonteCarloCollisions::isotropic_coll(particle::ChargedSpecies<1, 3>& species, size_t idx, double vmag, double chi) {
+template <unsigned NX>
+void MonteCarloCollisions<NX>::isotropic_coll(particle::ChargedSpecies<NX, 3>& species, size_t idx, double vmag, double chi) {
     auto vs = isotropic_scatter(species.v()[idx], chi);
     species.v()[idx] = {vs.x * vmag, vs.y * vmag, vs.z * vmag};
 }
 
-bool MonteCarloCollisions::electron_elastic_coll(particle::ChargedSpecies<1, 3> &electrons,
-                                     particle::ChargedSpecies<1, 3> &ions,
+template <unsigned NX>
+bool MonteCarloCollisions<NX>::electron_elastic_coll(particle::ChargedSpecies<NX, 3> &electrons,
+                                     particle::ChargedSpecies<NX, 3> &ions,
                                      size_t p_idx, double kinetic_energy) {
     double chi = random_chi();
     isotropic_coll(electrons, p_idx,electron_elastic_vmag(kinetic_energy, chi, ions.m()), chi);
     return true;
 }
 
-bool MonteCarloCollisions::electron_excitation_coll(
-    particle::ChargedSpecies<1, 3> &electrons, particle::ChargedSpecies<1, 3> &ions,
+template <unsigned NX>
+bool MonteCarloCollisions<NX>::electron_excitation_coll(
+    particle::ChargedSpecies<NX, 3> &electrons, particle::ChargedSpecies<NX, 3> &ions,
     size_t p_idx, double kinetic_energy, double threshold) {
     
     if(kinetic_energy < threshold)
@@ -230,8 +244,9 @@ bool MonteCarloCollisions::electron_excitation_coll(
     return true;
 }
 
-bool MonteCarloCollisions::electron_ionization_coll(
-    particle::ChargedSpecies<1, 3> &electrons, particle::ChargedSpecies<1, 3> &ions,
+template <unsigned NX>
+bool MonteCarloCollisions<NX>::electron_ionization_coll(
+    particle::ChargedSpecies<NX, 3> &electrons, particle::ChargedSpecies<NX, 3> &ions,
     size_t p_idx, double kinetic_energy, double threshold) {
 
     if (kinetic_energy < threshold)
@@ -256,7 +271,7 @@ bool MonteCarloCollisions::electron_ionization_coll(
     // Generated ion
     // TODO(lui): Move from std::function to something with better performance
     ions.add(1, [event_pos, ion_mass, neutral_temperature](core::Vec<3> &v,
-                                                           core::Vec<1> &x) {
+                                                           core::Vec<NX> &x) {
       x = event_pos;
       double vtemp =
           std::sqrt(kn::constants::kb * neutral_temperature / ion_mass);
@@ -267,9 +282,10 @@ bool MonteCarloCollisions::electron_ionization_coll(
     return true;
 }
 
-int MonteCarloCollisions::collide_electrons(
-    particle::ChargedSpecies<1, 3> &electrons,
-    particle::ChargedSpecies<1, 3> &ions) {
+template <unsigned NX>
+int MonteCarloCollisions<NX>::collide_electrons(
+    particle::ChargedSpecies<NX, 3> &electrons,
+    particle::ChargedSpecies<NX, 3> &ions) {
 
     double n_null_f = m_p_null_e * (double)electrons.n();
     size_t n_null = (size_t) std::floor(n_null_f);
@@ -328,7 +344,8 @@ int MonteCarloCollisions::collide_electrons(
     return 0;
 }
 
-bool MonteCarloCollisions::ions_isotropic_coll(particle::ChargedSpecies<1, 3> &ions,
+template <unsigned NX>
+bool MonteCarloCollisions<NX>::ions_isotropic_coll(particle::ChargedSpecies<NX, 3> &ions,
                                      size_t p_idx,
                                      double kinetic_energy_rel) {
     double chi = random_chi2();
@@ -341,8 +358,8 @@ bool MonteCarloCollisions::ions_isotropic_coll(particle::ChargedSpecies<1, 3> &i
     return true;
 }
 
-
-void MonteCarloCollisions::collide_ions(particle::ChargedSpecies<1, 3> &ions) {
+template <unsigned NX>
+void MonteCarloCollisions<NX>::collide_ions(particle::ChargedSpecies<NX, 3> &ions) {
     double n_null_f = m_p_null_i * (double)ions.n();
     size_t n_null = (size_t) std::floor(n_null_f);
     n_null = (n_null_f - (double)n_null) > random::uniform() ? n_null + 1 : n_null;
@@ -412,3 +429,7 @@ void MonteCarloCollisions::collide_ions(particle::ChargedSpecies<1, 3> &ions) {
         vp.z += v_rand_neutral.z;
     }
 }
+
+template class kn::collisions::MonteCarloCollisions<1>;
+template class kn::collisions::MonteCarloCollisions<2>;
+template class kn::collisions::MonteCarloCollisions<3>;
