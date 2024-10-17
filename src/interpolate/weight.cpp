@@ -1,9 +1,9 @@
 #include "kn/interpolate/weight.h"
 #include "kn/particle/species.h"
 
-void kn::interpolate::weight_to_grid(const kn::particle::ChargedSpecies &species, kn::spatial::UniformGrid &out) {
+void kn::interpolate::weight_to_grid(const kn::particle::ChargedSpecies<1,1> &species, kn::spatial::UniformGrid &out) {
     const size_t n = species.n();
-    double* x = species.x();
+    auto* x = species.x();
 
     out.set(0.0);
 
@@ -12,7 +12,7 @@ void kn::interpolate::weight_to_grid(const kn::particle::ChargedSpecies &species
 
     for(size_t i = 0; i < n; i++) {
 
-        double xp = x[i];
+        double xp = x[i].x;
         size_t il = static_cast<size_t>(floor(xp / dx));
         double xl = static_cast<double>(il) * dx;
         double xr = static_cast<double>(il + 1) * dx;
@@ -22,9 +22,9 @@ void kn::interpolate::weight_to_grid(const kn::particle::ChargedSpecies &species
     }
 }
 
-void kn::interpolate::weight_to_grid(const kn::particle::ChargedSpecies1D3V &species, kn::spatial::UniformGrid &out) {
+void kn::interpolate::weight_to_grid(const kn::particle::ChargedSpecies<1,3> &species, kn::spatial::UniformGrid &out) {
     const size_t n = species.n();
-    double* x = species.x();
+    auto* x = species.x();
 
     out.set(0.0);
 
@@ -33,7 +33,7 @@ void kn::interpolate::weight_to_grid(const kn::particle::ChargedSpecies1D3V &spe
 
     for(size_t i = 0; i < n; i++) {
 
-        double xp = x[i];
+        double xp = x[i].x;
         size_t il = static_cast<size_t>(floor(xp / dx));
         double xl = static_cast<double>(il) * dx;
         double xr = static_cast<double>(il + 1) * dx;

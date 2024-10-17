@@ -47,7 +47,7 @@ namespace {
         }
     }
 
-    double kinetic_energy_ev(const kn::particle::ChargedSpecies1D3V& p, size_t idx) {
+    double kinetic_energy_ev(const kn::particle::ChargedSpecies<1, 3>& p, size_t idx) {
         const auto& v = p.v()[idx];
         return 0.5 * p.m() * (v.x * v.x + v.y * v.y + v.z * v.z) / kn::constants::e;
     }
@@ -56,7 +56,7 @@ namespace {
         return neutral_density * cross_section * std::sqrt(2.0 * kn::constants::e * kinetic_energy / mass);
     }
 
-    kn::core::Vec3 isotropic_scatter(const kn::core::Vec3& v, double chi) {
+    kn::core::Vec3 isotropic_scatter(const kn::core::Vec<3>& v, double chi) {
 
         const auto vn = v.normalized();
        
@@ -203,13 +203,13 @@ double MonteCarloCollisions::frequency_ratio(const CollisionReaction& cs, double
     return collision_frequency(m_config.m_n_neutral, interpolate_cross_section(cs, kinetic_energy), kinetic_energy, kn::constants::m_e) / m_nu_prime_e;
 }
 
-void MonteCarloCollisions::isotropic_coll(particle::ChargedSpecies1D3V& species, size_t idx, double vmag, double chi) {
+void MonteCarloCollisions::isotropic_coll(particle::ChargedSpecies<1, 3>& species, size_t idx, double vmag, double chi) {
     auto vs = isotropic_scatter(species.v()[idx], chi);
     species.v()[idx] = {vs.x * vmag, vs.y * vmag, vs.z * vmag};
 }
 
-bool MonteCarloCollisions::electron_elastic_coll(particle::ChargedSpecies1D3V &electrons,
-                                     particle::ChargedSpecies1D3V &ions,
+bool MonteCarloCollisions::electron_elastic_coll(particle::ChargedSpecies<1, 3> &electrons,
+                                     particle::ChargedSpecies<1, 3> &ions,
                                      size_t p_idx, double kinetic_energy) {
     double chi = random_chi();
     isotropic_coll(electrons, p_idx,electron_elastic_vmag(kinetic_energy, chi, ions.m()), chi);
@@ -217,7 +217,7 @@ bool MonteCarloCollisions::electron_elastic_coll(particle::ChargedSpecies1D3V &e
 }
 
 bool MonteCarloCollisions::electron_excitation_coll(
-    particle::ChargedSpecies1D3V &electrons, particle::ChargedSpecies1D3V &ions,
+    particle::ChargedSpecies<1, 3> &electrons, particle::ChargedSpecies<1, 3> &ions,
     size_t p_idx, double kinetic_energy, double threshold) {
     
     if(kinetic_energy < threshold)
@@ -231,7 +231,7 @@ bool MonteCarloCollisions::electron_excitation_coll(
 }
 
 bool MonteCarloCollisions::electron_ionization_coll(
-    particle::ChargedSpecies1D3V &electrons, particle::ChargedSpecies1D3V &ions,
+    particle::ChargedSpecies<1, 3> &electrons, particle::ChargedSpecies<1, 3> &ions,
     size_t p_idx, double kinetic_energy, double threshold) {
 
     if (kinetic_energy < threshold)
@@ -255,8 +255,8 @@ bool MonteCarloCollisions::electron_ionization_coll(
 
     // Generated ion
     // TODO(lui): Move from std::function to something with better performance
-    ions.add(1, [event_pos, ion_mass, neutral_temperature](core::Vec3 &v,
-                                                           double &x) {
+    ions.add(1, [event_pos, ion_mass, neutral_temperature](core::Vec<3> &v,
+                                                           core::Vec<1> &x) {
       x = event_pos;
       double vtemp =
           std::sqrt(kn::constants::kb * neutral_temperature / ion_mass);
@@ -268,8 +268,8 @@ bool MonteCarloCollisions::electron_ionization_coll(
 }
 
 int MonteCarloCollisions::collide_electrons(
-    particle::ChargedSpecies1D3V &electrons,
-    particle::ChargedSpecies1D3V &ions) {
+    particle::ChargedSpecies<1, 3> &electrons,
+    particle::ChargedSpecies<1, 3> &ions) {
 
     double n_null_f = m_p_null_e * (double)electrons.n();
     size_t n_null = (size_t) std::floor(n_null_f);
@@ -328,7 +328,7 @@ int MonteCarloCollisions::collide_electrons(
     return 0;
 }
 
-bool MonteCarloCollisions::ions_isotropic_coll(particle::ChargedSpecies1D3V &ions,
+bool MonteCarloCollisions::ions_isotropic_coll(particle::ChargedSpecies<1, 3> &ions,
                                      size_t p_idx,
                                      double kinetic_energy_rel) {
     double chi = random_chi2();
@@ -342,7 +342,7 @@ bool MonteCarloCollisions::ions_isotropic_coll(particle::ChargedSpecies1D3V &ion
 }
 
 
-void MonteCarloCollisions::collide_ions(particle::ChargedSpecies1D3V &ions) {
+void MonteCarloCollisions::collide_ions(particle::ChargedSpecies<1, 3> &ions) {
     double n_null_f = m_p_null_i * (double)ions.n();
     size_t n_null = (size_t) std::floor(n_null_f);
     n_null = (n_null_f - (double)n_null) > random::uniform() ? n_null + 1 : n_null;
@@ -392,7 +392,7 @@ void MonteCarloCollisions::collide_ions(particle::ChargedSpecies1D3V &ions) {
                         break;
                     }
                     case CollisionType::Backscattering: {
-                        vp = core::Vec3();
+                        vp = core::Vec<3>();
                         collided = true;
                         break;
                     }

@@ -2,13 +2,13 @@
 
 namespace kn::particle {
 
-    void apply_symmetric_boundary(ChargedSpecies &species, double xmin, double xmax) {
+    void apply_symmetric_boundary(ChargedSpecies<1,1> &species, double xmin, double xmax) {
 
         size_t n = species.n();
-        double* x = species.x();
+        auto* x = species.x();
 
         for(size_t i = 0; i < n; i++) {
-            double& pos = x[i];
+            double& pos = x[i].x;
             if(pos < xmin) {
                 double dx = xmin - pos;
                 pos = xmax - dx;            
@@ -19,12 +19,12 @@ namespace kn::particle {
         }
     }
 
-    void apply_absorbing_boundary(ChargedSpecies1D3V& species, double xmin, double xmax) {
+    void apply_absorbing_boundary(ChargedSpecies<1,3>& species, double xmin, double xmax) {
         
-        double* x = species.x();
+        auto* x = species.x();
 
         for(long long i = species.n() - 1; i >= 0; i--) {
-            double pos = x[i];
+            double pos = x[i].x;
             if(pos < xmin || pos > xmax) {
                 species.remove(i);
             } 
