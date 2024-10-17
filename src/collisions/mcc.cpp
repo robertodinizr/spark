@@ -56,7 +56,7 @@ namespace {
         return neutral_density * cross_section * std::sqrt(2.0 * kn::constants::e * kinetic_energy / mass);
     }
 
-    kn::core::Vec3 isotropic_scatter(const kn::core::Vec<3>& v, double chi) {
+    kn::core::Vec<3> isotropic_scatter(const kn::core::Vec<3>& v, double chi) {
 
         const auto vn = v.normalized();
        
@@ -359,7 +359,7 @@ void MonteCarloCollisions::collide_ions(particle::ChargedSpecies<1, 3> &ions) {
 
         size_t p_idx = m_particle_samples[i];
 
-        core::Vec3 v_rand_neutral = {
+        core::Vec<3> v_rand_neutral = {
             kn::random::normal() * vth,
             kn::random::normal() * vth,
             kn::random::normal() * vth
