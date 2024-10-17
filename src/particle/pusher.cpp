@@ -1,6 +1,7 @@
 #include "kn/particle/pusher.h"
 #include "kn/particle/species.h"
 
+template <>
 void kn::particle::move_particles(kn::particle::ChargedSpecies<1,1> &species, double dt) {
     size_t n = species.n();
     auto* v = species.v();
@@ -14,6 +15,7 @@ void kn::particle::move_particles(kn::particle::ChargedSpecies<1,1> &species, do
     }
 }
 
+template <>
 void kn::particle::move_particles(kn::particle::ChargedSpecies<1,3> &species, double dt) {
     size_t n = species.n();
     auto* v = species.v();

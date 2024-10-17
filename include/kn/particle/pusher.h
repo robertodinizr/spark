@@ -3,7 +3,6 @@
 #include "kn/particle/species.h"
 
 namespace kn::particle {
-
-    void move_particles(kn::particle::ChargedSpecies<1,1>& species, double dt);
-    void move_particles(kn::particle::ChargedSpecies<1,3>& species, double dt);
+    template <unsigned NX, unsigned NV> 
+    void move_particles(kn::particle::ChargedSpecies<NX, NV>& species, double dt);
 }
