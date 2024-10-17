@@ -5,6 +5,6 @@
 
 namespace kn::interpolate {
 
-    template <unsigned NX, unsigned NV>
-    void field_at_particles(const kn::spatial::UniformGrid& field, kn::particle::ChargedSpecies<NX, NV>& species);
+    template <class FieldType, unsigned NX, unsigned NV>
+    void field_at_particles(const FieldType& field, kn::particle::ChargedSpecies<NX, NV>& species);
 }
