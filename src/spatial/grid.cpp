@@ -1,13 +1,13 @@
 #include "kn/spatial/grid.h"
+
 #include <algorithm>
 
 using namespace kn::spatial;
 
-UniformGrid::UniformGrid(double l, size_t n) : 
-    m_l(l), m_n(n) {
-            m_dx = l / static_cast<double>(n - 1);
-            m_data.resize(n);
-            set(0.0);
+UniformGrid::UniformGrid(double l, size_t n) : m_l(l), m_n(n) {
+    m_dx = l / static_cast<double>(n - 1);
+    m_data.resize(n);
+    set(0.0);
 };
 
 void UniformGrid::set(double v) {
@@ -23,7 +23,7 @@ const std::vector<double>& UniformGrid::data() const {
 }
 
 double* UniformGrid::data_ptr() const {
-    return (double*) m_data.data();
+    return (double*)m_data.data();
 }
 
 size_t UniformGrid::n() const {
@@ -39,18 +39,17 @@ double UniformGrid::dx() const {
 }
 
 void UniformGrid::apply(double mul, double add) {
-    for(size_t i = 0; i < m_n; i++) {
+    for (size_t i = 0; i < m_n; i++) {
         m_data[i] = m_data[i] * mul + add;
     }
 }
 
-void AverageGrid::add(const UniformGrid &grid) {
-
+void AverageGrid::add(const UniformGrid& grid) {
     auto& av = m_average_grid.data();
     auto& gr = grid.data();
-    
-    for(size_t i = 0; i < m_average_grid.n(); i++) {
-        av[i] = (av[i] * (double)m_count / (double)(m_count + 1)) + (gr[i] / (double)(m_count + 1)); 
+
+    for (size_t i = 0; i < m_average_grid.n(); i++) {
+        av[i] = (av[i] * (double)m_count / (double)(m_count + 1)) + (gr[i] / (double)(m_count + 1));
     }
 
     m_count++;
