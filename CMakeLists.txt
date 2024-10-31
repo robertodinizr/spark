@@ -23,6 +23,7 @@ add_library(kn STATIC
   "src/electromagnetics/poisson.cpp"
   "src/collisions/mcc.cpp"
   "src/collisions/reaction.cpp"
+  "src/collisions/scattering.cpp"
 )
 
 random_src(kn)

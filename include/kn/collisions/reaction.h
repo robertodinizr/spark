@@ -4,7 +4,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "kn/core/vec.h"
+#include "target.h"
 #include "kn/particle/species.h"
 
 namespace kn::collisions {
@@ -18,7 +18,8 @@ struct CrossSection {
 template <unsigned NX, unsigned NV>
 class Reaction {
 public:
-    CrossSection cross_section;
+    Reaction(CrossSection&& cs) : m_cross_section(cs) {}
+    CrossSection m_cross_section;
     virtual bool react(particle::ChargedSpecies<NX, NV>& projectile,
                        size_t id,
                        double kinetic_energy) = 0;
@@ -27,17 +28,6 @@ public:
 
 template <unsigned NX, unsigned NV>
 using Reactions = std::vector<std::unique_ptr<Reaction<NX, NV>>>;
-
-template <unsigned NX, unsigned NV>
-class Target {
-public:
-    virtual double dens_at(const core::Vec<NX>& pos) = 0;
-    virtual double dens_max() = 0;
-    virtual double p_null(const Reactions<NX, NV>& reactions,
-                          const particle::ChargedSpecies<NX, NV>& m_projectile) = 0;
-    virtual double temperature();
-    virtual ~Target(){};
-};
 
 enum class RelativeDynamics { SlowProjectile, FastProjectile };
 

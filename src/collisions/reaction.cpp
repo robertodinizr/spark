@@ -66,7 +66,7 @@ template <unsigned NX, unsigned NV>
 double total_cs(double energy, const Reactions<NX, NV>& reactions) {
     double cs = 0.0;
     for (const auto& reaction : reactions)
-        cs += interpolate_cross_section(reaction->cross_section, energy);
+        cs += interpolate_cross_section(reaction->m_cross_section, energy);
     return cs;
 }
 
@@ -94,7 +94,7 @@ double max_sigmav(const Reactions<NX, NV>& reactions,
                   bool slow_projectiles) {
     double sigmav = 0.0;
     for (const auto& reaction : reactions)
-        sigmav = std::max(sigmav, max_sigmav_for_cross_section(reaction->cross_section, reactions,
+        sigmav = std::max(sigmav, max_sigmav_for_cross_section(reaction->m_cross_section, reactions,
                                                                projectile.m(), slow_projectiles));
     return sigmav;
 }
@@ -154,7 +154,7 @@ void MCCReactionSet<NX, NV>::react_all() {
             fr1 += collision_frequency(
                        dens_n,
                        interpolate_cross_section(
-                           reaction->cross_section,
+                           reaction->m_cross_section,
                            (m_config.m_dyn == RelativeDynamics::SlowProjectile ? 0.5 : 1.0) *
                                kinetic_energy),
                        kinetic_energy, m_projectile.m()) /
