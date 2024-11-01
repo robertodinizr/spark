@@ -160,7 +160,7 @@ void MCCReactionSet<NX, NV>::react_all() {
                        kinetic_energy, m_projectile.m()) /
                    nu_prime;
 
-            if (reaction->react(m_projectile, p_idx, kinetic_energy))
+            if ((r1 > fr0 && r1 <= fr1) && reaction->react(m_projectile, p_idx, kinetic_energy))
                 break;
         }
 
