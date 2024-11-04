@@ -12,18 +12,18 @@ double scattering::random_chi() {
 }
 
 kn::core::Vec<3> scattering::isotropic_scatter(const kn::core::Vec<3>& v, double chi) {
-    const auto vn = v.normalized();
+    const auto [x, y, z] = v.normalized();
 
     const double phi = 2 * kn::constants::pi * kn::random::uniform();
-    const double zeta = std::acos(vn.z);
+    const double zeta = std::acos(z);
 
     const double k0 = std::cos(chi);
     const double k1 = std::sin(chi) / std::sin(zeta);
     const double k2 = k1 * std::sin(phi);
     const double k3 = k1 * std::cos(phi);
 
-    return {vn.x * k0 + vn.y * k2 + vn.x * vn.z * k3, vn.y * k0 - vn.x * k2 + vn.y * vn.z * k3,
-            vn.z * k0 - (vn.x * vn.x + vn.y * vn.y) * k3};
+    return {x * k0 + y * k2 + x * z * k3, y * k0 - x * k2 + y * z * k3,
+            z * k0 - (x * x + y * y) * k3};
 }
 
 template <unsigned NX>

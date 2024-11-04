@@ -145,8 +145,6 @@ void MCCReactionSet<NX, NV>::react_all() {
         double fr0 = 0.0;
         double fr1 = 0.0;
 
-        bool collided = false;
-
         double dens_n = m_config.m_target->dens_at(pp);
 
         for (const auto& reaction : m_config.m_reactions) {
@@ -160,8 +158,11 @@ void MCCReactionSet<NX, NV>::react_all() {
                        kinetic_energy, m_projectile.m()) /
                    nu_prime;
 
-            if ((r1 > fr0 && r1 <= fr1) && reaction->react(m_projectile, p_idx, kinetic_energy))
+            if (r1 > fr0 && r1 <= fr1) {
+                reaction->react(m_projectile, p_idx, kinetic_energy);
                 break;
+            }
+
         }
 
         if (m_config.m_dyn == RelativeDynamics::SlowProjectile) {

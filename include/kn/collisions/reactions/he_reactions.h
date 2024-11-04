@@ -17,7 +17,7 @@ class HeCollisionBase : public Reaction<NX, NV> {
 public:
     HeCollisionConfig m_config;
     HeCollisionBase(HeCollisionConfig config, CrossSection&& cs)
-        : m_config(config), Reaction<NX, NV>(std::move(cs)) {}
+        : Reaction<NX, NV>(std::move(cs)), m_config(config) {}
 };
 
 template <unsigned NX, unsigned NV>
@@ -61,8 +61,8 @@ public:
 template <unsigned NX, unsigned NV>
 class HeElectronIonIonizationCollision : public HeCollisionBase<NX, NV> {
 public:
-    HeElectronIonIonizationCollision(particle::ChargedSpecies<NX, NV>& ions, HeCollisionConfig config, CrossSection&& cs) : 
-        ions(ions), HeCollisionBase<NX,NV>(config, std::move(cs)) {};
+    HeElectronIonIonizationCollision(particle::ChargedSpecies<NX, NV>& ions, double t_neutral, HeCollisionConfig config, CrossSection&& cs) :
+        HeCollisionBase<NX, NV>(config, std::move(cs)), ions(ions), t_neutral(t_neutral) {};
 
     bool react(particle::ChargedSpecies<NX, NV>& projectile,
                size_t id,
@@ -76,16 +76,15 @@ public:
 
         auto event_pos = projectile.x()[id];
 
-
         double ion_mass = ions.m();
         double neutral_temperature = t_neutral;
         double vmag = scattering::electron_ionization_vmag(kinetic_energy, this->m_cross_section.threshold);
 
-        double chi1 = std::acos(1.0 - 2.0 * random::uniform());
+        double chi1 = scattering::random_chi();
         scattering::isotropic_coll(projectile, id, vmag, chi1);
 
         // Generated electron
-        double chi2 = std::acos(1.0 - 2.0 * random::uniform());
+        double chi2 = scattering::random_chi();
         scattering::isotropic_coll(projectile, p_idx_new, vmag, chi2);
 
         // Generated ion
