@@ -5,6 +5,7 @@
 namespace kn::collisions::scattering {
 
 double random_chi();
+double random_chi2();
 
 kn::core::Vec<3> isotropic_scatter(const kn::core::Vec<3>& v, double chi);
 

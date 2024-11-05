@@ -11,6 +11,10 @@ double scattering::random_chi() {
     return std::acos(1.0 - 2.0 * kn::random::uniform());
 }
 
+double scattering::random_chi2() {
+    return std::acos(sqrt(1.0 - kn::random::uniform()));
+}
+
 kn::core::Vec<3> scattering::isotropic_scatter(const kn::core::Vec<3>& v, double chi) {
     const auto [x, y, z] = v.normalized();
 

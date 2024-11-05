@@ -2,9 +2,9 @@
 
 #include "kn/collisions/reaction.h"
 #include "kn/collisions/scattering.h"
+#include "kn/constants/constants.h"
 #include "kn/particle/species.h"
 #include "kn/random/random.h"
-#include "kn/constants/constants.h"
 
 namespace kn::collisions::reactions {
 
@@ -21,7 +21,7 @@ public:
 };
 
 template <unsigned NX, unsigned NV>
-class HeElectronIonElasticCollision : public HeCollisionBase<NX, NV> {
+class HeElectronElasticCollision : public HeCollisionBase<NX, NV> {
 public:
     using HeCollisionBase<NX, NV>::HeCollisionBase;
 
@@ -40,7 +40,7 @@ public:
 };
 
 template <unsigned NX, unsigned NV>
-class HeElectronIonExcitationCollision : public HeCollisionBase<NX, NV> {
+class HeExcitationCollision : public HeCollisionBase<NX, NV> {
 public:
     using HeCollisionBase<NX, NV>::HeCollisionBase;
 
@@ -51,23 +51,26 @@ public:
             return false;
 
         double chi = scattering::random_chi();
-        scattering::isotropic_coll(projectile, id,
-                       scattering::electron_excitation_vmag(kinetic_energy, this->m_cross_section.threshold),
-                       chi);
+        scattering::isotropic_coll(
+            projectile, id,
+            scattering::electron_excitation_vmag(kinetic_energy, this->m_cross_section.threshold),
+            chi);
         return true;
     }
 };
 
 template <unsigned NX, unsigned NV>
-class HeElectronIonIonizationCollision : public HeCollisionBase<NX, NV> {
+class HeIonizationCollision : public HeCollisionBase<NX, NV> {
 public:
-    HeElectronIonIonizationCollision(particle::ChargedSpecies<NX, NV>& ions, double t_neutral, HeCollisionConfig config, CrossSection&& cs) :
-        HeCollisionBase<NX, NV>(config, std::move(cs)), ions(ions), t_neutral(t_neutral) {};
+    HeIonizationCollision(particle::ChargedSpecies<NX, NV>& ions,
+                          double t_neutral,
+                          HeCollisionConfig config,
+                          CrossSection&& cs)
+        : HeCollisionBase<NX, NV>(config, std::move(cs)), ions(ions), t_neutral(t_neutral){};
 
     bool react(particle::ChargedSpecies<NX, NV>& projectile,
                size_t id,
                double kinetic_energy) override {
-
         if (kinetic_energy < this->m_cross_section.threshold)
             return false;
 
@@ -78,7 +81,8 @@ public:
 
         double ion_mass = ions.m();
         double neutral_temperature = t_neutral;
-        double vmag = scattering::electron_ionization_vmag(kinetic_energy, this->m_cross_section.threshold);
+        double vmag =
+            scattering::electron_ionization_vmag(kinetic_energy, this->m_cross_section.threshold);
 
         double chi1 = scattering::random_chi();
         scattering::isotropic_coll(projectile, id, vmag, chi1);
@@ -102,6 +106,38 @@ public:
 private:
     particle::ChargedSpecies<NX, NV>& ions;
     double t_neutral = 0.0;
+};
+
+template <unsigned NX, unsigned NV>
+class HeIonElasticCollision : public HeCollisionBase<NX, NV> {
+public:
+    using HeCollisionBase<NX, NV>::HeCollisionBase;
+
+    bool react(particle::ChargedSpecies<NX, NV>& projectile,
+               size_t id,
+               double kinetic_energy) override {
+        double chi = scattering::random_chi2();
+        double cos_chi = std::cos(chi);
+        double vmag = std::sqrt(2.0 * constants::e * (kinetic_energy * cos_chi * cos_chi) /
+                                projectile.m());
+
+        scattering::isotropic_coll(projectile, id, vmag, chi);
+
+        return true;
+    }
+};
+
+template <unsigned NX, unsigned NV>
+class HeIonChargeExchangeCollision : public HeCollisionBase<NX, NV> {
+public:
+    using HeCollisionBase<NX, NV>::HeCollisionBase;
+
+    bool react(particle::ChargedSpecies<NX, NV>& projectile,
+               size_t id,
+               double kinetic_energy) override {
+        projectile.v()[id] = core::Vec<3>();
+        return true;
+    }
 };
 
 }  // namespace kn::collisions::reactions
