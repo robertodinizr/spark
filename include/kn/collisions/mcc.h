@@ -12,18 +12,17 @@ enum class RelativeDynamics { SlowProjectile, FastProjectile };
 
 template <unsigned NX, unsigned NV>
 struct ReactionConfig {
-  double m_dt;
-  double m_m_dx;
-  std::unique_ptr<Target<NX, NV>> m_target;
-  Reactions<NX, NV> m_reactions;
-  RelativeDynamics m_dyn;
+    double m_dt;
+    double m_m_dx;
+    std::unique_ptr<Target<NX, NV>> m_target;
+    Reactions<NX, NV> m_reactions;
+    RelativeDynamics m_dyn;
 };
 
 template <unsigned NX, unsigned NV>
 class MCCReactionSet {
 public:
-    MCCReactionSet(particle::ChargedSpecies<NX, NV>& projectile,
-                           ReactionConfig<NX, NV>&& config);
+    MCCReactionSet(particle::ChargedSpecies<NX, NV>& projectile, ReactionConfig<NX, NV>&& config);
     void react_all();
 
 private:

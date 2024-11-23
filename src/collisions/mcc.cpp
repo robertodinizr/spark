@@ -104,7 +104,7 @@ MCCReactionSet<NX, NV>::MCCReactionSet(particle::ChargedSpecies<NX, NV>& project
                                        ReactionConfig<NX, NV>&& config)
     : m_projectile(projectile), m_config(std::move(config)) {
     m_max_sigma_v = max_sigmav(m_config.m_reactions, m_projectile,
-                              m_config.m_dyn == RelativeDynamics::SlowProjectile);
+                               m_config.m_dyn == RelativeDynamics::SlowProjectile);
 }
 
 template <unsigned NX, unsigned NV>
