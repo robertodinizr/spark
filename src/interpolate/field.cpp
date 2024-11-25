@@ -12,14 +12,16 @@ void field_at_particles(const kn::spatial::UniformGrid& field,
 
     const double dx = field.dx();
     const double* e = field.data_ptr();
+    const double mdx = 1.0 / dx;
 
     for (size_t i = 0; i < n; i++) {
         const double xp = x[i].x;
-        const auto il = static_cast<size_t>(floor(xp / dx));
-        const double xl = static_cast<double>(il) * dx;
-        const double xr = static_cast<double>(il + 1) * dx;
+        const double xp_dx = xp * mdx;
 
-        f[i] = {e[il] * (xr - xp) / dx + e[il + 1] * (xp - xl) / dx};
+        const double il = floor(xp_dx);
+        const size_t ils = static_cast<size_t>(il);
+
+        f[i] = {e[ils] * (il + 1.0 - xp_dx) + e[ils + 1] * (xp_dx - il)};
     }
 }
 }  // namespace

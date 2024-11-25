@@ -14,15 +14,16 @@ void weight_to_grid(const kn::particle::ChargedSpecies<1, NV>& species,
 
     const double dx = out.dx();
     auto& g = out.data();
+    const double mdx = 1.0 / dx;
 
     for (size_t i = 0; i < n; i++) {
-        double xp = x[i].x;
-        size_t il = static_cast<size_t>(floor(xp / dx));
-        double xl = static_cast<double>(il) * dx;
-        double xr = static_cast<double>(il + 1) * dx;
+        const double xp = x[i].x;
+        const double xp_dx = xp * mdx;
+        const double il = floor(xp_dx);
+        const size_t ils = static_cast<size_t>(il);
 
-        g[il] += (xr - xp) / dx;
-        g[il + 1] += (xp - xl) / dx;
+        g[ils] += il + 1.0 - xp_dx;
+        g[ils + 1] += xp_dx - il;
     }
 
     g.front() *= 2.0;
