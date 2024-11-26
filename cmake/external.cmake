@@ -14,3 +14,5 @@ if(Eigen_ADDED)
   add_library(Eigen INTERFACE IMPORTED)
   target_include_directories(Eigen INTERFACE ${Eigen_SOURCE_DIR})
 endif()
+
+CPMAddPackage("gh:luihabl/parallel-hashmap#master")

@@ -4,25 +4,24 @@
 #include "kn/particle/species.h"
 #include "kn/random/random.h"
 
+#include <parallel_hashmap/phmap.h>
+
 using namespace kn::collisions;
 
 namespace {
-void sample_from_sequence(size_t n,
-                          size_t range,
-                          std::vector<size_t>& sequence,
-                          std::unordered_set<size_t>& used) {
-    sequence.resize(n);
-    used.clear();
 
-    for (size_t i = 0; i < n; i++) {
-        size_t num = 0;
-        do {
-            num = kn::random::uniform(range);
-        } while (used.find(num) != used.end());
 
-        used.insert(num);
-        sequence[i] = num;
+
+auto& sample_from_sequence(const size_t n, const size_t range) {
+
+    static phmap::flat_hash_set<size_t> cache;
+    cache.clear();
+
+    while (cache.size() < n) {
+        cache.insert(kn::random::uniform(range));
     }
+
+    return cache;
 }
 
 template <unsigned NX>
@@ -118,10 +117,11 @@ void MCCReactionSet<NX, NV>::react_all() {
 
     core::Vec<3> v_random;
 
-    sample_from_sequence(n_null, m_projectile.n(), m_particle_samples, m_used_cache);
+    // sample_from_sequence(n_null, m_projectile.n(), m_particle_samples, m_used_cache);
+    auto& samples = sample_from_sequence(n_null, m_projectile.n());
 
-    for (size_t i = 0; i < n_null; i++) {
-        size_t p_idx = m_particle_samples[i];
+
+    for (size_t p_idx : samples) {
 
         auto& pp = m_projectile.x()[p_idx];
         auto& vp = m_projectile.v()[p_idx];
