@@ -9,9 +9,6 @@
 using namespace kn::collisions;
 
 namespace {
-
-
-
 auto& sample_from_sequence(const size_t n, const size_t range) {
 
     static phmap::flat_hash_set<size_t> cache;
