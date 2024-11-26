@@ -114,9 +114,7 @@ void MCCReactionSet<NX, NV>::react_all() {
 
     core::Vec<3> v_random;
 
-    // sample_from_sequence(n_null, m_projectile.n(), m_particle_samples, m_used_cache);
-    auto& samples = sample_from_sequence(n_null, m_projectile.n());
-
+    const auto& samples = sample_from_sequence(n_null, m_projectile.n());
 
     for (size_t p_idx : samples) {
 

@@ -15,9 +15,7 @@ void field_at_particles(const kn::spatial::UniformGrid& field,
     const double mdx = 1.0 / dx;
 
     for (size_t i = 0; i < n; i++) {
-        const double xp = x[i].x;
-        const double xp_dx = xp * mdx;
-
+        const double xp_dx = x[i].x * mdx;
         const double il = floor(xp_dx);
         const size_t ils = static_cast<size_t>(il);
 
