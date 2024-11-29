@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-namespace kn::random {
+namespace spark::random {
 
 // Generates a pseudo-random seed based on std::time
 uint64_t gen_seed();
@@ -27,13 +27,13 @@ inline double normal(double mean, double std) {
 // Uniform random number of type T in the range [0, vmax]
 template <typename T>
 inline T uniform(T vmax) {
-    return static_cast<T>(kn::random::uniform() * (double)vmax);
+    return static_cast<T>(spark::random::uniform() * (double)vmax);
 }
 
 // Uniform random number of type T in the range [vmin, vmax]
 template <typename T>
 inline T uniform(T vmin, T vmax) {
-    return static_cast<T>(kn::random::uniform() * (double)(vmax - vmin)) + vmin;
+    return static_cast<T>(spark::random::uniform() * (double)(vmax - vmin)) + vmin;
 }
 
-}  // namespace kn::random
+}  // namespace spark::random

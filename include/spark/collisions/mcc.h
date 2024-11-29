@@ -3,10 +3,10 @@
 #include <unordered_set>
 #include <vector>
 
-#include "kn/particle/species.h"
+#include "spark/particle/species.h"
 #include "reaction.h"
 
-namespace kn::collisions {
+namespace spark::collisions {
 
 enum class RelativeDynamics { SlowProjectile, FastProjectile };
 
@@ -34,4 +34,4 @@ private:
     double m_max_sigma_v = 0.0;
 };
 
-}  // namespace kn::collisions
+}  // namespace spark::collisions

@@ -1,6 +1,6 @@
 #ifdef KN_RANDOM_USE_XOSHIRO256PLUS
 
-#include "kn/random/random.h"
+#include "spark/random/random.h"
 
 namespace _xoshiro256plus
 {
@@ -12,7 +12,7 @@ namespace _splitmix64
     #include "external/splitmix64.c"
 }
 
-namespace kn::random
+namespace spark::random
 {
     void initialize(uint64_t seed)
     {

@@ -1,13 +1,13 @@
 #ifdef KN_RANDOM_USE_SPLITMIX64
 
-#include "kn/random/random.h"
+#include "spark/random/random.h"
 
 namespace _splitmix64
 {
     #include "external/splitmix64.c"
 }
 
-namespace kn::random
+namespace spark::random
 {
     void initialize(uint64_t seed)
     {

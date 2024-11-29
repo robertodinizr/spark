@@ -1,12 +1,12 @@
-#include "kn/collisions/mcc.h"
+#include "spark/collisions/mcc.h"
 
-#include "kn/constants/constants.h"
-#include "kn/particle/species.h"
-#include "kn/random/random.h"
+#include "spark/constants/constants.h"
+#include "spark/particle/species.h"
+#include "spark/random/random.h"
 
 #include <parallel_hashmap/phmap.h>
 
-using namespace kn::collisions;
+using namespace spark::collisions;
 
 namespace {
 auto& sample_from_sequence(const size_t n, const size_t range) {
@@ -15,16 +15,16 @@ auto& sample_from_sequence(const size_t n, const size_t range) {
     cache.clear();
 
     while (cache.size() < n) {
-        cache.insert(kn::random::uniform(range));
+        cache.insert(spark::random::uniform(range));
     }
 
     return cache;
 }
 
 template <unsigned NX>
-double kinetic_energy_ev(const kn::particle::ChargedSpecies<NX, 3>& p, size_t idx) {
+double kinetic_energy_ev(const spark::particle::ChargedSpecies<NX, 3>& p, size_t idx) {
     const auto& v = p.v()[idx];
-    return 0.5 * p.m() * (v.x * v.x + v.y * v.y + v.z * v.z) / kn::constants::e;
+    return 0.5 * p.m() * (v.x * v.x + v.y * v.y + v.z * v.z) / spark::constants::e;
 }
 
 double collision_frequency(const double neutral_density,
@@ -32,7 +32,7 @@ double collision_frequency(const double neutral_density,
                            const double kinetic_energy,
                            const double mass) {
     return neutral_density * cross_section *
-           std::sqrt(2.0 * kn::constants::e * kinetic_energy / mass);
+           std::sqrt(2.0 * spark::constants::e * kinetic_energy / mass);
 }
 
 double calc_p_null(double nu_prime, double dt) {
@@ -72,7 +72,7 @@ double max_sigmav_for_cross_section(const CrossSection& cs,
                                     const double projectile_mass,
                                     const bool slow_projectiles) {
     double nu_prime = 0.0;
-    const double rmc = (slow_projectiles ? 2.0 : 1.0) * kn::constants::e / projectile_mass;
+    const double rmc = (slow_projectiles ? 2.0 : 1.0) * spark::constants::e / projectile_mass;
 
     for (double energy : cs.energy) {
         const double tcs = total_cs<NX>(energy, reactions);
@@ -85,7 +85,7 @@ double max_sigmav_for_cross_section(const CrossSection& cs,
 
 template <unsigned NX, unsigned NV>
 double max_sigmav(const Reactions<NX, NV>& reactions,
-                  kn::particle::ChargedSpecies<NX, NV>& projectile,
+                  spark::particle::ChargedSpecies<NX, NV>& projectile,
                   bool slow_projectiles) {
     double sigmav = 0.0;
     for (const auto& reaction : reactions)
@@ -165,6 +165,6 @@ void MCCReactionSet<NX, NV>::react_all() {
     }
 }
 
-template class kn::collisions::MCCReactionSet<1, 3>;
-template class kn::collisions::MCCReactionSet<2, 3>;
-template class kn::collisions::MCCReactionSet<3, 3>;
+template class spark::collisions::MCCReactionSet<1, 3>;
+template class spark::collisions::MCCReactionSet<2, 3>;
+template class spark::collisions::MCCReactionSet<3, 3>;

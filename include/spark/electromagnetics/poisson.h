@@ -3,9 +3,9 @@
 #include <memory>
 #include <vector>
 
-#include "kn/spatial/grid.h"
+#include "spark/spatial/grid.h"
 
-namespace kn::electromagnetics {
+namespace spark::electromagnetics {
 
 class SymmetricPoissonSolver {
 private:
@@ -49,7 +49,7 @@ private:
 };
 
 void charge_density(double particle_weight,
-                    const kn::spatial::UniformGrid& ion_density,
-                    const kn::spatial::UniformGrid& electron_density,
-                    kn::spatial::UniformGrid& out);
-}  // namespace kn::electromagnetics
+                    const spark::spatial::UniformGrid& ion_density,
+                    const spark::spatial::UniformGrid& electron_density,
+                    spark::spatial::UniformGrid& out);
+}  // namespace spark::electromagnetics

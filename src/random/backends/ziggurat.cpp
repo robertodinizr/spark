@@ -1,11 +1,11 @@
-#include "kn/random/random.h"
+#include "spark/random/random.h"
 
 #include <cmath>
 
 // This implementation is taken from Numpy random_standard_normal: 
 // https://github.com/numpy/numpy/blob/50a74fb65fc752e77a2f9e9e2b7227629c2ba953/numpy/random/src/distributions/distributions.c#L137
 
-namespace kn::random
+namespace spark::random
 {
     constexpr uint64_t ki_double[] = {
     0x000EF33D8025EF6AULL, 0x0000000000000000ULL, 0x000C08BE98FBC6A8ULL,

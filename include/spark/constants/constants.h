@@ -2,7 +2,7 @@
 
 // source: https://physics.nist.gov/cuu/Constants/Table/allascii.txt
 
-namespace kn::constants {
+namespace spark::constants {
 
 // Elementary charge [C]
 constexpr double e = 1.602176634e-19;
@@ -19,4 +19,4 @@ constexpr double eps0 = 8.8541878188e-12;
 // Boltzmann constant [J K^-1]
 constexpr double kb = 1.380649e-23;
 
-}  // namespace kn::constants
+}  // namespace spark::constants

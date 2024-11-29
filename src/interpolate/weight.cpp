@@ -1,12 +1,12 @@
-#include "kn/interpolate/weight.h"
+#include "spark/interpolate/weight.h"
 
-#include "kn/particle/species.h"
-#include "kn/spatial/grid.h"
+#include "spark/particle/species.h"
+#include "spark/spatial/grid.h"
 
 namespace {
 template <unsigned NV>
-void weight_to_grid(const kn::particle::ChargedSpecies<1, NV>& species,
-                    kn::spatial::UniformGrid& out) {
+void weight_to_grid(const spark::particle::ChargedSpecies<1, NV>& species,
+                    spark::spatial::UniformGrid& out) {
     const size_t n = species.n();
     auto* x = species.x();
 
@@ -31,12 +31,12 @@ void weight_to_grid(const kn::particle::ChargedSpecies<1, NV>& species,
 }  // namespace
 
 template <class GridType, unsigned NX, unsigned NV>
-void kn::interpolate::weight_to_grid(const kn::particle::ChargedSpecies<NX, NV>& species,
+void spark::interpolate::weight_to_grid(const spark::particle::ChargedSpecies<NX, NV>& species,
                                      GridType& out) {
     ::weight_to_grid(species, out);
 }
 
-template void kn::interpolate::weight_to_grid(const kn::particle::ChargedSpecies<1, 1>& species,
-                                              kn::spatial::UniformGrid& out);
-template void kn::interpolate::weight_to_grid(const kn::particle::ChargedSpecies<1, 3>& species,
-                                              kn::spatial::UniformGrid& out);
+template void spark::interpolate::weight_to_grid(const spark::particle::ChargedSpecies<1, 1>& species,
+                                              spark::spatial::UniformGrid& out);
+template void spark::interpolate::weight_to_grid(const spark::particle::ChargedSpecies<1, 3>& species,
+                                              spark::spatial::UniformGrid& out);

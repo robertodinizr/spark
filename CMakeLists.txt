@@ -6,13 +6,13 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(
-  kn
+  spark
   LANGUAGES CXX)
 
 include(cmake/external.cmake)
 include(cmake/random.cmake)
 
-add_library(kn STATIC
+add_library(spark STATIC
   "src/random/seed.cpp"
   "src/particle/species.cpp"
   "src/particle/pusher.cpp"
@@ -25,18 +25,18 @@ add_library(kn STATIC
   "src/collisions/scattering.cpp"
 )
 
-random_src(kn)
+random_src(spark)
 
-add_library(kn::kn ALIAS kn)
+add_library(spark::spark ALIAS spark)
 
-target_include_directories(kn 
+target_include_directories(spark 
 PUBLIC
   "include"
 PRIVATE
   "src"
 )
 
-target_link_libraries(kn
+target_link_libraries(spark
         PRIVATE
         Eigen
         phmap)
@@ -53,7 +53,7 @@ if(KN_BUILD_TESTS)
 # add_subdirectory(tests)
 
 # target_link_libraries(kn_tests PRIVATE 
-#   kn 
+#   spark 
 #   Catch2::Catch2WithMain
 # )
 

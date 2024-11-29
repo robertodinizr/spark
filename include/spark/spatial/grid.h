@@ -2,7 +2,7 @@
 
 #include <vector>
 
-namespace kn::spatial {
+namespace spark::spatial {
 
 class UniformGrid {
 public:
@@ -40,4 +40,4 @@ private:
     size_t m_count = 0;
 };
 
-}  // namespace kn::spatial
+}  // namespace spark::spatial

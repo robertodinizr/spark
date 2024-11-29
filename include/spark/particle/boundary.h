@@ -1,8 +1,8 @@
 #pragma once
 
-#include "kn/particle/species.h"
+#include "spark/particle/species.h"
 
-namespace kn::particle {
+namespace spark::particle {
 
 template <unsigned NV>
 void apply_symmetric_boundary(ChargedSpecies<1, NV>& species, double xmin, double xmax);
@@ -10,4 +10,4 @@ void apply_symmetric_boundary(ChargedSpecies<1, NV>& species, double xmin, doubl
 template <unsigned NV>
 void apply_absorbing_boundary(ChargedSpecies<1, NV>& species, double xmin, double xmax);
 
-}  // namespace kn::particle
+}  // namespace spark::particle

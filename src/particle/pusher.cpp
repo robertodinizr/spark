@@ -1,9 +1,9 @@
-#include "kn/particle/pusher.h"
+#include "spark/particle/pusher.h"
 
-#include "kn/particle/species.h"
+#include "spark/particle/species.h"
 
 template <>
-void kn::particle::move_particles(kn::particle::ChargedSpecies<1, 1>& species, double dt) {
+void spark::particle::move_particles(spark::particle::ChargedSpecies<1, 1>& species, double dt) {
     size_t n = species.n();
     auto* v = species.v();
     auto* x = species.x();
@@ -17,7 +17,7 @@ void kn::particle::move_particles(kn::particle::ChargedSpecies<1, 1>& species, d
 }
 
 template <>
-void kn::particle::move_particles(kn::particle::ChargedSpecies<1, 3>& species, double dt) {
+void spark::particle::move_particles(spark::particle::ChargedSpecies<1, 3>& species, double dt) {
     size_t n = species.n();
     auto* v = species.v();
     auto* x = species.x();

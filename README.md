@@ -1,2 +1,2 @@
-# `kn`
+# `spark`
 Kinetic simulation toolbox

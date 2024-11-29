@@ -1,4 +1,4 @@
-#include "kn/random/random.h"
+#include "spark/random/random.h"
 
 
 #ifdef KN_RANDOM_SEED_USE_TIME_SPLITMIX64
@@ -16,7 +16,7 @@ namespace
     std::once_flag once;
 }
 
-namespace kn::random
+namespace spark::random
 {
     uint64_t gen_seed()
     {
@@ -40,7 +40,7 @@ namespace _seed
     std::uniform_int_distribution<uint64_t> uniform_u64;
 }
 
-namespace kn::random
+namespace spark::random
 {
     uint64_t gen_seed()
     {

@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-namespace kn::core {
+namespace spark::core {
 
 template <unsigned N>
 struct Vec {
@@ -37,4 +37,4 @@ struct Vec<3> {
     }
 };
 
-}  // namespace kn::core
+}  // namespace spark::core

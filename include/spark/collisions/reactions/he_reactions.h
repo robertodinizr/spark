@@ -1,12 +1,12 @@
 #pragma once
 
-#include "kn/collisions/reaction.h"
-#include "kn/collisions/scattering.h"
-#include "kn/constants/constants.h"
-#include "kn/particle/species.h"
-#include "kn/random/random.h"
+#include "spark/collisions/reaction.h"
+#include "spark/collisions/scattering.h"
+#include "spark/constants/constants.h"
+#include "spark/particle/species.h"
+#include "spark/random/random.h"
 
-namespace kn::collisions::reactions {
+namespace spark::collisions::reactions {
 
 struct HeCollisionConfig {
     double he_atomic_mass = 0.0;
@@ -95,7 +95,7 @@ public:
         // TODO(lui): Move from std::function to something with better performance
         ions.add(1, [event_pos, ion_mass, neutral_temperature](core::Vec<3>& v, core::Vec<NX>& x) {
             x = event_pos;
-            double vtemp = std::sqrt(kn::constants::kb * neutral_temperature / ion_mass);
+            double vtemp = std::sqrt(spark::constants::kb * neutral_temperature / ion_mass);
             v = {random::normal(0.0, vtemp), random::normal(0.0, vtemp),
                  random::normal(0.0, vtemp)};
         });
@@ -140,4 +140,4 @@ public:
     }
 };
 
-}  // namespace kn::collisions::reactions
+}  // namespace spark::collisions::reactions

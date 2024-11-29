@@ -1,6 +1,6 @@
 #ifdef KN_RANDOM_USE_STD_MT19937
 
-#include "kn/random/random.h"
+#include "spark/random/random.h"
 
 #include <random>
 
@@ -12,7 +12,7 @@ namespace _std_mt19937_64
     std::normal_distribution<double> normal;
 }
 
-namespace kn::random
+namespace spark::random
 {
     void initialize(uint64_t seed)
     {

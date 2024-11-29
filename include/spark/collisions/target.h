@@ -1,8 +1,8 @@
 #pragma once
 
-#include "kn/core/vec.h"
+#include "spark/core/vec.h"
 
-namespace kn::collisions {
+namespace spark::collisions {
 
 template <unsigned NX, unsigned NV>
 class Target {
@@ -27,4 +27,4 @@ private:
     double m_density = 0.0;
     double m_temperature = 0.0;
 };
-}  // namespace kn::collisions
+}  // namespace spark::collisions

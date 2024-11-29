@@ -5,9 +5,9 @@
 #include <vector>
 
 #include "target.h"
-#include "kn/particle/species.h"
+#include "spark/particle/species.h"
 
-namespace kn::collisions {
+namespace spark::collisions {
 
 struct CrossSection {
     double threshold = 0.0;
@@ -29,4 +29,4 @@ public:
 template <unsigned NX, unsigned NV>
 using Reactions = std::vector<std::unique_ptr<Reaction<NX, NV>>>;
 
-}  // namespace kn::collisions
+}  // namespace spark::collisions

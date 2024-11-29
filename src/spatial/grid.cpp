@@ -1,8 +1,8 @@
-#include "kn/spatial/grid.h"
+#include "spark/spatial/grid.h"
 
 #include <algorithm>
 
-using namespace kn::spatial;
+using namespace spark::spatial;
 
 UniformGrid::UniformGrid(double l, size_t n) : m_l(l), m_n(n) {
     m_dx = l / static_cast<double>(n - 1);

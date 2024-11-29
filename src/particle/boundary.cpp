@@ -1,6 +1,6 @@
-#include "kn/particle/boundary.h"
+#include "spark/particle/boundary.h"
 
-namespace kn::particle {
+namespace spark::particle {
 
 template <unsigned NV>
 void apply_symmetric_boundary(ChargedSpecies<1, NV>& species, double xmin, double xmax) {
@@ -30,18 +30,18 @@ void apply_absorbing_boundary(ChargedSpecies<1, NV>& species, double xmin, doubl
         }
     }
 }
-}  // namespace kn::particle
+}  // namespace spark::particle
 
-template void kn::particle::apply_absorbing_boundary(ChargedSpecies<1, 1>& species,
+template void spark::particle::apply_absorbing_boundary(ChargedSpecies<1, 1>& species,
                                                      double xmin,
                                                      double xmax);
-template void kn::particle::apply_absorbing_boundary(ChargedSpecies<1, 3>& species,
+template void spark::particle::apply_absorbing_boundary(ChargedSpecies<1, 3>& species,
                                                      double xmin,
                                                      double xmax);
 
-template void kn::particle::apply_symmetric_boundary(ChargedSpecies<1, 1>& species,
+template void spark::particle::apply_symmetric_boundary(ChargedSpecies<1, 1>& species,
                                                      double xmin,
                                                      double xmax);
-template void kn::particle::apply_symmetric_boundary(ChargedSpecies<1, 3>& species,
+template void spark::particle::apply_symmetric_boundary(ChargedSpecies<1, 3>& species,
                                                      double xmin,
                                                      double xmax);

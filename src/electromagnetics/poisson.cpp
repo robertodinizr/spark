@@ -1,12 +1,12 @@
-#include "kn/electromagnetics/poisson.h"
+#include "spark/electromagnetics/poisson.h"
 
 #include <Eigen/Sparse>
 #include <iostream>
 #include <memory>
 
-#include "kn/constants/constants.h"
+#include "spark/constants/constants.h"
 
-using namespace kn::electromagnetics;
+using namespace spark::electromagnetics;
 
 struct SymmetricPoissonSolver::SolverImpl {
     size_t n = 0;
@@ -114,7 +114,7 @@ void DirichletPoissonSolver::poisson_thomas(const double* fin,
                                             double dx,
                                             double ylhs,
                                             double yrhs) {
-    const double poisson_rhs_const = -1.0 / kn::constants::eps0;
+    const double poisson_rhs_const = -1.0 / spark::constants::eps0;
     const double k = poisson_rhs_const * dx * dx;
     double cprime = -0.5;
 
@@ -149,14 +149,14 @@ void DirichletPoissonSolver::efield_extrapolate(const double* phi, double* eout,
     // eout[n-1] = - (phi[n-1] - phi[n-2]) / dx;
 }
 
-void kn::electromagnetics::charge_density(double particle_weight,
-                                          const kn::spatial::UniformGrid& ion_density,
-                                          const kn::spatial::UniformGrid& electron_density,
-                                          kn::spatial::UniformGrid& out) {
+void spark::electromagnetics::charge_density(double particle_weight,
+                                          const spark::spatial::UniformGrid& ion_density,
+                                          const spark::spatial::UniformGrid& electron_density,
+                                          spark::spatial::UniformGrid& out) {
     auto& out_data = out.data();
     auto& ne = electron_density.data();
     auto& ni = ion_density.data();
-    double k = kn::constants::e * particle_weight / ion_density.dx();
+    double k = spark::constants::e * particle_weight / ion_density.dx();
 
     for (size_t i = 0; i < out.n(); i++) {
         out_data[i] = k * (ni[i] - ne[i]);

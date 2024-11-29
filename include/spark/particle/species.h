@@ -3,9 +3,9 @@
 #include <functional>
 #include <vector>
 
-#include "kn/core/vec.h"
+#include "spark/core/vec.h"
 
-namespace kn::particle {
+namespace spark::particle {
 
 template <unsigned NX, unsigned NV>
 class ChargedSpecies {
@@ -35,4 +35,4 @@ private:
     double m_m = 0;
 };
 
-}  // namespace kn::particle
+}  // namespace spark::particle
