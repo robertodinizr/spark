@@ -6,55 +6,54 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(
-  spark
-  LANGUAGES CXX)
+        spark
+        LANGUAGES CXX)
 
 include(cmake/external.cmake)
 include(cmake/random.cmake)
 
 add_library(spark STATIC
-  "src/random/seed.cpp"
-  "src/particle/species.cpp"
-  "src/particle/pusher.cpp"
-  "src/particle/boundary.cpp"
-  "src/spatial/grid.cpp"
-  "src/interpolate/weight.cpp"
-  "src/interpolate/field.cpp"
-  "src/electromagnetics/poisson.cpp"
-  "src/collisions/mcc.cpp"
-  "src/collisions/scattering.cpp"
+        "src/random/seed.cpp"
+        "src/particle/species.cpp"
+        "src/particle/pusher.cpp"
+        "src/particle/boundary.cpp"
+        "src/spatial/grid.cpp"
+        "src/interpolate/weight.cpp"
+        "src/interpolate/field.cpp"
+        "src/electromagnetics/poisson.cpp"
+        "src/collisions/mcc.cpp"
+        "src/collisions/scattering.cpp"
 )
 
 random_src(spark)
 
 add_library(spark::spark ALIAS spark)
 
-target_include_directories(spark 
-PUBLIC
-  "include"
-PRIVATE
-  "src"
+target_include_directories(spark
+        PUBLIC
+        "include"
+        PRIVATE
+        "src"
 )
 
 target_link_libraries(spark
         PRIVATE
-        Eigen
         phmap)
 
-if(KN_BUILD_TESTS)
+if (KN_BUILD_TESTS)
 
-# CPMAddPackage("gh:catchorg/Catch2@3.5.0")
-# list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
+    # CPMAddPackage("gh:catchorg/Catch2@3.5.0")
+    # list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
 
-# enable_testing()
-# include(CTest)
-# include(Catch)
+    # enable_testing()
+    # include(CTest)
+    # include(Catch)
 
-# add_subdirectory(tests)
+    # add_subdirectory(tests)
 
-# target_link_libraries(kn_tests PRIVATE 
-#   spark 
-#   Catch2::Catch2WithMain
-# )
+    # target_link_libraries(kn_tests PRIVATE
+    #   spark
+    #   Catch2::Catch2WithMain
+    # )
 
-endif()
+endif ()
