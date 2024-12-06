@@ -1,16 +1,18 @@
 #include "spark/interpolate/field.h"
 
+#include <spark/spatial/grid.h>
+
 #include "spark/particle/species.h"
 
 namespace {
 template <unsigned NV>
-void field_at_particles(const spark::spatial::UniformGrid& field,
+void field_at_particles(const spark::spatial::UniformGrid<1>& field,
                         spark::particle::ChargedSpecies<1, NV>& species) {
     const size_t n = species.n();
     auto* f = species.f();
     auto* x = species.x();
 
-    const double dx = field.dx();
+    const double dx = field.dx()[0];
     const double* e = field.data_ptr();
     const double mdx = 1.0 / dx;
 
@@ -26,11 +28,13 @@ void field_at_particles(const spark::spatial::UniformGrid& field,
 
 template <class FieldType, unsigned NX, unsigned NV>
 void spark::interpolate::field_at_particles(const FieldType& field,
-                                         spark::particle::ChargedSpecies<NX, NV>& species) {
+                                            spark::particle::ChargedSpecies<NX, NV>& species) {
     ::field_at_particles(field, species);
 }
 
-template void spark::interpolate::field_at_particles(const spark::spatial::UniformGrid& field,
-                                                  spark::particle::ChargedSpecies<1, 1>& species);
-template void spark::interpolate::field_at_particles(const spark::spatial::UniformGrid& field,
-                                                  spark::particle::ChargedSpecies<1, 3>& species);
+template void spark::interpolate::field_at_particles(
+    const spark::spatial::UniformGrid<1>& field,
+    spark::particle::ChargedSpecies<1, 1>& species);
+template void spark::interpolate::field_at_particles(
+    const spark::spatial::UniformGrid<1>& field,
+    spark::particle::ChargedSpecies<1, 3>& species);

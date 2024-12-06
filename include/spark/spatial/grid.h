@@ -1,42 +1,60 @@
 #pragma once
 
+#include <array>
 #include <vector>
 
 namespace spark::spatial {
 
+template <unsigned N>
 class UniformGrid {
 public:
     UniformGrid() = default;
-    UniformGrid(double l, size_t n);
+    UniformGrid(const std::array<double, N>& l, const std::array<size_t, N>& n) {
+        l_ = l;
+        n_ = n;
+        n_total_ = 1;
+        for (unsigned i = 0; i < N; i++) {
+            dx_[i] = l[i] / static_cast<double>(n[i] - 1);
+            n_total_ *= n_[i];
+        }
 
-    void set(double v);
-    std::vector<double>& data();
-    const std::vector<double>& data() const;
-    double* data_ptr() const;
+        data_.resize(n_total_);
+        set(0.0);
+    }
 
-    size_t n() const;
-    double l() const;
-    double dx() const;
+    void set(double v) { std::fill(data_.begin(), data_.end(), v); }
+    std::vector<double>& data() { return data_; }
+    const std::vector<double>& data() const { return data_; }
+    double* data_ptr() const { return const_cast<double*>(data_.data()); }
 
-    void apply(double mul, double add);
+    auto n_total() const { return n_total_; }
+    auto n() const { return n_; }
+    auto l() const { return l_; }
+    auto dx() const { return dx_; }
+
+    void apply(double mul, double add) {
+        for (size_t i = 0; i < n_total_; i++) {
+            data_[i] = data_[i] * mul + add;
+        }
+    }
 
 private:
-    size_t m_n = 0;
-    double m_l = 0.0, m_dx = 0.0;
-    std::vector<double> m_data;
+    size_t n_total_ = 0;
+    std::array<size_t, N> n_;
+    std::array<double, N> l_, dx_;
+    std::vector<double> data_;
 };
 
 class AverageGrid {
 public:
     AverageGrid() = default;
-    AverageGrid(double l, size_t n) : m_average_grid(l, n) {}
-    AverageGrid(const UniformGrid& grid) : m_average_grid(grid.l(), grid.n()) {}
+    AverageGrid(const UniformGrid<1>& grid) : m_average_grid(grid) { m_average_grid.set(0); }
 
-    void add(const UniformGrid& grid);
+    void add(const UniformGrid<1>& grid);
     std::vector<double>& get() { return m_average_grid.data(); }
 
 private:
-    UniformGrid m_average_grid;
+    UniformGrid<1> m_average_grid;
     size_t m_count = 0;
 };
 

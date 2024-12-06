@@ -27,7 +27,7 @@ private:
 };
 
 void charge_density(double particle_weight,
-                    const spark::spatial::UniformGrid& ion_density,
-                    const spark::spatial::UniformGrid& electron_density,
-                    spark::spatial::UniformGrid& out);
+                    const spark::spatial::UniformGrid<1>& ion_density,
+                    const spark::spatial::UniformGrid<1>& electron_density,
+                    spark::spatial::UniformGrid<1>& out);
 }  // namespace spark::electromagnetics
