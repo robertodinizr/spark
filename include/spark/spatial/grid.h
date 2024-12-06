@@ -50,7 +50,16 @@ public:
     AverageGrid() = default;
     AverageGrid(const UniformGrid<1>& grid) : m_average_grid(grid) { m_average_grid.set(0); }
 
-    void add(const UniformGrid<1>& grid);
+    void add(const UniformGrid<1>& grid) {
+        auto& av = m_average_grid.data();
+        auto& gr = grid.data();
+
+        for (size_t i = 0; i < m_average_grid.n_total(); i++) {
+            av[i] = (av[i] * (double)m_count / (double)(m_count + 1)) + (gr[i] / (double)(m_count + 1));
+        }
+
+        m_count++;
+    }
     std::vector<double>& get() { return m_average_grid.data(); }
 
 private:
