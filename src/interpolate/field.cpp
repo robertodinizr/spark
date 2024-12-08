@@ -12,7 +12,7 @@ void field_at_particles(const spark::spatial::UniformGrid<1>& field,
     auto* f = species.f();
     auto* x = species.x();
 
-    const double dx = field.dx()[0];
+    const double dx = field.dx().x;
     const double* e = field.data_ptr();
     const double mdx = 1.0 / dx;
 

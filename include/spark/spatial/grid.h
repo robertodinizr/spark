@@ -1,6 +1,7 @@
 #pragma once
 
-#include <array>
+#include <spark/core/vec.h>
+
 #include <vector>
 
 namespace spark::spatial {
@@ -40,8 +41,8 @@ public:
 
 private:
     size_t n_total_ = 0;
-    std::array<size_t, N> n_;
-    std::array<double, N> l_, dx_;
+    core::ULongVec<N> n_;
+    core::Vec<N> l_, dx_;
     std::vector<double> data_;
 };
 
@@ -55,7 +56,8 @@ public:
         auto& gr = grid.data();
 
         for (size_t i = 0; i < m_average_grid.n_total(); i++) {
-            av[i] = (av[i] * (double)m_count / (double)(m_count + 1)) + (gr[i] / (double)(m_count + 1));
+            av[i] =
+                (av[i] * (double)m_count / (double)(m_count + 1)) + (gr[i] / (double)(m_count + 1));
         }
 
         m_count++;

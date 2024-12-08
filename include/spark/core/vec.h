@@ -4,37 +4,46 @@
 
 namespace spark::core {
 
+template <typename T, unsigned N>
+struct TVec {
+    T norm() const;
+    TVec normalized() const;
+};
+
+template <typename T>
+struct TVec<T, 1> {
+    T x{};
+    T norm() const { return x; }
+    TVec normalized() const { return TVec{x / norm()}; }
+};
+
+template <typename T>
+struct TVec<T, 2> {
+    T x{}, y{};
+    T norm() const { return std::sqrt(x * x + y * y); }
+    TVec normalized() const {
+        const T n = norm();
+        return TVec{x / n, y / n};
+    }
+};
+
+template <typename T>
+struct TVec<T, 3> {
+    T x{}, y{}, z{};
+    T norm() const { return std::sqrt(x * x + y * y + z * z); }
+    TVec normalized() const {
+        const T n = norm();
+        return TVec{x / n, y / n, z / n};
+    }
+};
+
 template <unsigned N>
-struct Vec {
-    double norm() const;
-    Vec normalized() const;
-};
+using Vec = TVec<double, N>;
 
-template <>
-struct Vec<1> {
-    double x = 0.0;
-    double norm() const { return x; }
-    Vec normalized() const { return Vec{x / norm()}; }
-};
+template <unsigned N>
+using IntVec = TVec<int, N>;
 
-template <>
-struct Vec<2> {
-    double x = 0.0, y = 0.0;
-    double norm() const { return std::sqrt(x * x + y * y); }
-    Vec normalized() const {
-        const double n = norm();
-        return Vec{x / n, y / n};
-    }
-};
-
-template <>
-struct Vec<3> {
-    double x = 0.0, y = 0.0, z = 0.0;
-    double norm() const { return std::sqrt(x * x + y * y + z * z); }
-    Vec normalized() const {
-        const double n = norm();
-        return Vec{x / n, y / n, z / n};
-    }
-};
+template <unsigned N>
+using ULongVec = TVec<size_t, N>;
 
 }  // namespace spark::core

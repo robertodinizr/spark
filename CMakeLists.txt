@@ -20,9 +20,11 @@ add_library(spark STATIC
         "src/spatial/grid.cpp"
         "src/interpolate/weight.cpp"
         "src/interpolate/field.cpp"
-        "src/electromagnetics/poisson.cpp"
+        "src/electromagnetics/struct_poisson.cpp"
         "src/collisions/mcc.cpp"
         "src/collisions/scattering.cpp"
+        src/electromagnetics/thomas_poisson.cpp
+        src/electromagnetics/util.cpp
 )
 
 random_src(spark)
@@ -38,7 +40,9 @@ target_include_directories(spark
 
 target_link_libraries(spark
         PRIVATE
-        phmap)
+        phmap
+        HYPRE
+)
 
 if (KN_BUILD_TESTS)
 
