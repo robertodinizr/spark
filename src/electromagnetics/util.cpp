@@ -11,6 +11,6 @@ void spark::electromagnetics::charge_density(double particle_weight,
     double k = spark::constants::e * particle_weight / ion_density.dx().x;
 
     for (size_t i = 0; i < out.n().x; i++) {
-        out_data[i] = k * (ni[i] - ne[i]);
+        out_data(i) = k * (ni(i) - ne(i));
     }
 }

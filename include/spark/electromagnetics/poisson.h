@@ -33,20 +33,20 @@ void charge_density(double particle_weight,
                     const spark::spatial::UniformGrid<1>& electron_density,
                     spark::spatial::UniformGrid<1>& out);
 
-enum class BoundaryType { Dirichlet, Neumann, None };
+enum class CellType : int { Internal = 0, BoundaryDirichlet = 1, BoundaryNeumann = 2 };
 
 class StructPoissonSolver {
 public:
-    struct Boundary {
-        BoundaryType type_ = BoundaryType::None;
-        core::Vec<2> x0, xf;
+    struct Region {
+        CellType region_type = CellType::Internal;
+        core::ULongVec<2> lower_left, upper_right;
     };
 
     struct DomainProp {
         size_t nx = 0, ny = 0;
     };
 
-    explicit StructPoissonSolver(const DomainProp& prop, const std::vector<Boundary>& boundaries);
+    explicit StructPoissonSolver(const DomainProp& prop, const std::vector<Region>& regions);
     ~StructPoissonSolver();
 
 private:

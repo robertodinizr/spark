@@ -13,7 +13,7 @@ void weight_to_grid(const spark::particle::ChargedSpecies<1, NV>& species,
     out.set(0.0);
 
     const double dx = out.dx().x;
-    auto& g = out.data();
+    auto& g = out.data().data();
     const double mdx = 1.0 / dx;
 
     for (size_t i = 0; i < n; i++) {

@@ -25,6 +25,7 @@ add_library(spark STATIC
         "src/collisions/scattering.cpp"
         src/electromagnetics/thomas_poisson.cpp
         src/electromagnetics/util.cpp
+        include/spark/core/matrix.h
 )
 
 random_src(spark)
