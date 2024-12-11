@@ -1,4 +1,5 @@
 #include <HYPRE_struct_ls.h>
+#include <spark/constants/constants.h>
 
 #include "spark/core/matrix.h"
 #include "spark/core/vec.h"
@@ -8,8 +9,9 @@ using namespace spark::electromagnetics;
 using namespace spark::core;
 
 namespace {
-constexpr int stencil_indices[5] = {0, 1, 2, 3, 4};
-constexpr int stencil_offsets[5][2] = {{0, 0}, {-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+int stencil_indices[5] = {0, 1, 2, 3, 4};
+int stencil_offsets[5][2] = {{0, 0}, {-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+constexpr double solver_tolerance = 1e-6;
 }  // namespace
 
 StructPoissonSolver::~StructPoissonSolver() = default;
@@ -28,48 +30,182 @@ struct StructPoissonSolver::Impl {
     DomainProp prop_;
 
     Impl(const DomainProp& prop, const std::vector<Region>& boundaries);
+    void assemble();
+    void solve(Matrix<2>& out, const Matrix<2>& rho);
+    ~Impl();
 
+private:
     void create_grid();
-    void create_matrix();
+    void create_matrices();
+    void create_stencil();
 
     void set_cells();
-    void assemble();
-    ~Impl();
+    void set_stencils();
+
+    CellType get_cell(int i, int j);
+    core::Matrix<2> input_cache_;
 };
 
 StructPoissonSolver::Impl::Impl(const DomainProp& prop, const std::vector<Region>& boundaries)
     : boundaries_(boundaries), prop_(prop) {
-    assemble();
+    input_cache_.resize(prop.extents.to<size_t>());
 }
 
 void StructPoissonSolver::Impl::create_grid() {
     HYPRE_StructGridCreate(MPI_COMM_SELF, 2, &hypre_grid_);
 
     int lower[] = {0, 0};
-    int upper[] = {static_cast<int>(prop_.nx) - 1, static_cast<int>(prop_.ny) - 1};
+    int upper[] = {prop_.extents.x - 1, prop_.extents.y - 1};
     HYPRE_StructGridSetExtents(hypre_grid_, lower, upper);
 
     HYPRE_StructGridAssemble(hypre_grid_);
 }
-void StructPoissonSolver::Impl::create_matrix() {
+void StructPoissonSolver::Impl::create_matrices() {
     HYPRE_StructStencilCreate(2, 5, &hypre_stencil_);
     HYPRE_StructMatrixCreate(MPI_COMM_SELF, hypre_grid_, hypre_stencil_, &hypre_A_);
     HYPRE_StructMatrixInitialize(hypre_A_);
+
+    HYPRE_StructVectorCreate(MPI_COMM_SELF, hypre_grid_, &hypre_b_);
+    HYPRE_StructVectorCreate(MPI_COMM_SELF, hypre_grid_, &hypre_x_);
+    HYPRE_StructVectorInitialize(hypre_b_);
+    HYPRE_StructVectorInitialize(hypre_x_);
 }
+void StructPoissonSolver::Impl::create_stencil() {
+    for (int n = 0; n < 5; n++)
+        HYPRE_StructStencilSetElement(hypre_stencil_, n, const_cast<int*>(&stencil_offsets[n][0]));
+}
+
 void StructPoissonSolver::Impl::set_cells() {
-    cells_.resize({prop_.nx, prop_.ny});
+    cells_.resize(ULongVec<2>(prop_.extents.x, prop_.extents.y));
     cells_.fill(CellType::Internal);
 
-    const auto size = ULongVec<2>{prop_.nx, prop_.ny};
-    for (const auto& [region_type, lower_left, upper_right] : boundaries_) {
-        cells_.fill(region_type, lower_left, upper_right);
+    for (const auto& b : boundaries_) {
+        cells_.fill(b.region_type, b.lower_left, b.upper_right);
     }
+}
+
+void StructPoissonSolver::Impl::set_stencils() {
+    const auto [sx, sy] = cells_.size();
+    const auto [dx, dy] = prop_.dx;
+
+    const double kx = 1.0 / (dx * dx);
+    const double ky = 1.0 / (dy * dy);
+
+    double stencil_internal[] = {-2.0 * (kx + ky), kx, kx, ky, ky};
+    double stencil_dirichlet[] = {1.0, 0.0, 0.0, 0.0, 0.0};
+    double stencil_neumann[] = {-2.0 * (kx + ky), 0.0, 0.0, 0.0, 0.0};
+
+    for (int i = 0; i < sx; ++i) {
+        for (int j = 0; j < sy; ++j) {
+            int index[] = {static_cast<int>(i), static_cast<int>(j)};
+
+            switch (cells_(i, j)) {
+                case CellType::Internal: {
+                    HYPRE_StructMatrixSetValues(hypre_A_, index, 5, stencil_indices,
+                                                stencil_internal);
+                    break;
+                }
+                case CellType::BoundaryDirichlet: {
+                    HYPRE_StructMatrixSetValues(hypre_A_, index, 5, stencil_indices,
+                                                stencil_dirichlet);
+                    break;
+                }
+                case CellType::BoundaryNeumann: {
+                    // check x
+                    if (get_cell(i - 1, j) == CellType::External) {
+                        stencil_neumann[1] = 0.0;
+                        stencil_neumann[2] = 2.0 * kx;
+                    } else if (get_cell(i + 1, j) == CellType::External) {
+                        stencil_neumann[1] = 2.0 * kx;
+                        stencil_neumann[2] = 0.0;
+                    } else {
+                        stencil_neumann[1] = kx;
+                        stencil_neumann[2] = kx;
+                    }
+
+                    // check y
+                    if (get_cell(i, j - 1) == CellType::External) {
+                        stencil_neumann[3] = 0.0;
+                        stencil_neumann[4] = 2.0 * ky;
+                    } else if (get_cell(i, j + 1) == CellType::External) {
+                        stencil_neumann[3] = 2.0 * ky;
+                        stencil_neumann[4] = 0.0;
+                    } else {
+                        stencil_neumann[3] = ky;
+                        stencil_neumann[4] = ky;
+                    }
+
+                    HYPRE_StructMatrixSetValues(hypre_A_, index, 5, stencil_indices,
+                                                stencil_neumann);
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+        }
+    }
+}
+CellType StructPoissonSolver::Impl::get_cell(int i, int j) {
+    if (i >= 0 && i < prop_.extents.x && j >= 0 && j < prop_.extents.y) {
+        return cells_(i, j);
+    }
+
+    return CellType::External;
 }
 
 void StructPoissonSolver::Impl::assemble() {
     create_grid();
     set_cells();
-    create_matrix();
+
+    create_matrices();
+    create_stencil();
+    set_stencils();
+
+    HYPRE_StructMatrixAssemble(hypre_A_);
+}
+void StructPoissonSolver::Impl::solve(Matrix<2>& out, const Matrix<2>& rho) {
+    HYPRE_StructVectorSetConstantValues(hypre_x_, 0.0);
+
+    HYPRE_StructVectorSetConstantValues(hypre_b_, 0.0);
+
+    input_cache_.data().assign(rho.data().begin(), rho.data().end());
+    auto& cache = input_cache_.data();
+    constexpr double k = -1.0 / constants::eps0;
+    for (size_t i = 0; i < input_cache_.count(); ++i) {
+        cache[i] *= k;
+    }
+
+    {
+        int ilower[] = {0, 0};
+        int iupper[] = {prop_.extents.x - 1, prop_.extents.y - 1};
+        HYPRE_StructVectorSetBoxValues(hypre_b_, ilower, iupper, cache.data());
+    }
+
+    for (const auto& [region_type, lower_left, upper_right, input] : boundaries_) {
+        if (region_type == CellType::BoundaryDirichlet && input) {
+            input_cache_.resize({static_cast<size_t>(upper_right.x - lower_left.x + 1),
+                                 static_cast<size_t>(upper_right.y - lower_left.y + 1)});
+            input_cache_.fill(input());
+            int ilower[] = {lower_left.x, lower_left.y};
+            int iupper[] = {upper_right.x, upper_right.y};
+            HYPRE_StructVectorSetBoxValues(hypre_b_, ilower, iupper, input_cache_.data_ptr());
+        }
+    }
+
+    HYPRE_StructSMGCreate(MPI_COMM_SELF, &hypre_solver_);
+    HYPRE_StructSMGSetTol(hypre_solver_, solver_tolerance);
+    HYPRE_StructSMGSetup(hypre_solver_, hypre_A_, hypre_b_, hypre_x_);
+    HYPRE_StructSMGSolve(hypre_solver_, hypre_A_, hypre_b_, hypre_x_);
+
+    {
+        int ilower[] = {0, 0};
+        int iupper[] = {prop_.extents.x - 1, prop_.extents.y - 1};
+        out.resize(prop_.extents.to<size_t>());
+        HYPRE_StructVectorGetBoxValues(hypre_x_, ilower, iupper, out.data_ptr());
+    }
+
+    HYPRE_StructSMGDestroy(hypre_solver_);
 }
 
 StructPoissonSolver::Impl::~Impl() {
@@ -87,4 +223,10 @@ StructPoissonSolver::Impl::~Impl() {
 
 StructPoissonSolver::StructPoissonSolver(const StructPoissonSolver::DomainProp& prop,
                                          const std::vector<Region>& regions)
-    : impl_(std::make_unique<Impl>(prop, regions)) {}
+    : impl_(std::make_unique<Impl>(prop, regions)) {
+    impl_->assemble();
+}
+
+void StructPoissonSolver::solve(core::Matrix<2>& out, const core::Matrix<2>& rho) {
+    impl_->solve(out, rho);
+}

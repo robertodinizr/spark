@@ -2,6 +2,7 @@
 
 #include <spark/core/vec.h>
 
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -33,20 +34,23 @@ void charge_density(double particle_weight,
                     const spark::spatial::UniformGrid<1>& electron_density,
                     spark::spatial::UniformGrid<1>& out);
 
-enum class CellType : int { Internal = 0, BoundaryDirichlet = 1, BoundaryNeumann = 2 };
+enum class CellType { Internal, External, BoundaryDirichlet, BoundaryNeumann };
 
 class StructPoissonSolver {
 public:
     struct Region {
         CellType region_type = CellType::Internal;
-        core::ULongVec<2> lower_left, upper_right;
+        core::IntVec<2> lower_left, upper_right;
+        std::function<double()> input;
     };
 
     struct DomainProp {
-        size_t nx = 0, ny = 0;
+        core::IntVec<2> extents;
+        core::Vec<2> dx;
     };
 
     explicit StructPoissonSolver(const DomainProp& prop, const std::vector<Region>& regions);
+    void solve(core::Matrix<2>& out, const core::Matrix<2>& rho);
     ~StructPoissonSolver();
 
 private:

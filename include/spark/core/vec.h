@@ -17,6 +17,11 @@ struct TVec<T, 1> {
     T sum() const { return x; }
     T mul() const { return x; }
     TVec normalized() const { return TVec{x / norm()}; }
+
+    template <typename G>
+    TVec<G, 1> to() const {
+        return TVec<G, 1>{static_cast<G>(x)};
+    }
 };
 
 template <typename T>
@@ -29,6 +34,11 @@ struct TVec<T, 2> {
         const T n = norm();
         return TVec{x / n, y / n};
     }
+
+    template <typename G>
+    TVec<G, 2> to() const {
+        return TVec<G, 2>{static_cast<G>(x), static_cast<G>(y)};
+    }
 };
 
 template <typename T>
@@ -40,6 +50,11 @@ struct TVec<T, 3> {
     TVec normalized() const {
         const T n = norm();
         return TVec{x / n, y / n, z / n};
+    }
+
+    template <typename G>
+    TVec<G, 3> to() const {
+        return TVec<G, 3>{static_cast<G>(x), static_cast<G>(y), static_cast<G>(z)};
     }
 };
 
