@@ -1,6 +1,7 @@
 #include <HYPRE_struct_ls.h>
 #include <spark/constants/constants.h>
 
+#include "_hypre_utilities.h"
 #include "spark/core/matrix.h"
 #include "spark/core/vec.h"
 #include "spark/electromagnetics/poisson.h"
@@ -52,7 +53,7 @@ StructPoissonSolver::Impl::Impl(const DomainProp& prop, const std::vector<Region
 }
 
 void StructPoissonSolver::Impl::create_grid() {
-    HYPRE_StructGridCreate(MPI_COMM_SELF, 2, &hypre_grid_);
+    HYPRE_StructGridCreate(0, 2, &hypre_grid_);
 
     int lower[] = {0, 0};
     int upper[] = {prop_.extents.x - 1, prop_.extents.y - 1};
@@ -62,11 +63,11 @@ void StructPoissonSolver::Impl::create_grid() {
 }
 void StructPoissonSolver::Impl::create_matrices() {
     HYPRE_StructStencilCreate(2, 5, &hypre_stencil_);
-    HYPRE_StructMatrixCreate(MPI_COMM_SELF, hypre_grid_, hypre_stencil_, &hypre_A_);
+    HYPRE_StructMatrixCreate(MPI_COMM_WORLD, hypre_grid_, hypre_stencil_, &hypre_A_);
     HYPRE_StructMatrixInitialize(hypre_A_);
 
-    HYPRE_StructVectorCreate(MPI_COMM_SELF, hypre_grid_, &hypre_b_);
-    HYPRE_StructVectorCreate(MPI_COMM_SELF, hypre_grid_, &hypre_x_);
+    HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid_, &hypre_b_);
+    HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid_, &hypre_x_);
     HYPRE_StructVectorInitialize(hypre_b_);
     HYPRE_StructVectorInitialize(hypre_x_);
 }
@@ -193,7 +194,7 @@ void StructPoissonSolver::Impl::solve(Matrix<2>& out, const Matrix<2>& rho) {
         }
     }
 
-    HYPRE_StructSMGCreate(MPI_COMM_SELF, &hypre_solver_);
+    HYPRE_StructSMGCreate(MPI_COMM_WORLD, &hypre_solver_);
     HYPRE_StructSMGSetTol(hypre_solver_, solver_tolerance);
     HYPRE_StructSMGSetup(hypre_solver_, hypre_A_, hypre_b_, hypre_x_);
     HYPRE_StructSMGSolve(hypre_solver_, hypre_A_, hypre_b_, hypre_x_);
