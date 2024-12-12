@@ -29,9 +29,14 @@ public:
 
     ENABLE_IF_2(2)
     void fill(const T& value, const TVec<G, N>& lower_left, const TVec<G, N>& upper_right) {
-        for (G i = 0; i < upper_right.x - lower_left.x + 1; ++i)
-            for (G j = 0; j < upper_right.y - lower_left.y + 1; ++j)
-                operator()(i + lower_left.x, j + lower_left.y) = value;
+        auto imin = std::min(lower_left.x, upper_right.x);
+        auto imax = std::max(lower_left.x, upper_right.x);
+        auto jmin = std::min(lower_left.y, upper_right.y);
+        auto jmax = std::max(lower_left.y, upper_right.y);
+
+        for (G i = imin; i <= imax; ++i)
+            for (G j = jmin; j <= jmax; ++j)
+                operator()(i, j) = value;
     }
 
     ENABLE_IF_2(1)

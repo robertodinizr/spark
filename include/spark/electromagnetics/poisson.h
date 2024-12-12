@@ -34,7 +34,7 @@ void charge_density(double particle_weight,
                     const spark::spatial::UniformGrid<1>& electron_density,
                     spark::spatial::UniformGrid<1>& out);
 
-enum class CellType { Internal, External, BoundaryDirichlet, BoundaryNeumann };
+enum class CellType : uint8_t { Internal, External, BoundaryDirichlet, BoundaryNeumann };
 
 class StructPoissonSolver {
 public:

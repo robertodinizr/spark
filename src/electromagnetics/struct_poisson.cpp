@@ -67,8 +67,8 @@ StructPoissonSolver::Impl::Impl(const DomainProp& prop, const std::vector<Region
 void StructPoissonSolver::Impl::create_grid() {
     HYPRE_StructGridCreate(MPI_COMM_WORLD, 2, &hypre_grid_);
 
-    int lower[] = {1, 1};
-    int upper[] = {prop_.extents.x - 2, prop_.extents.y - 2};
+    int lower[] = {0, 0};
+    int upper[] = {prop_.extents.x - 1, prop_.extents.y - 1};
     HYPRE_StructGridSetExtents(hypre_grid_, lower, upper);
 
     HYPRE_StructGridAssemble(hypre_grid_);
@@ -85,7 +85,7 @@ void StructPoissonSolver::Impl::create_matrices() {
 }
 void StructPoissonSolver::Impl::create_stencil() {
     for (int n = 0; n < 5; n++)
-        HYPRE_StructStencilSetElement(hypre_stencil_, n, const_cast<int*>(&stencil_offsets[n][0]));
+        HYPRE_StructStencilSetElement(hypre_stencil_, n, &stencil_offsets[n][0]);
 }
 
 void StructPoissonSolver::Impl::set_cells() {
@@ -104,16 +104,14 @@ void StructPoissonSolver::Impl::set_stencils() {
     const double kx = 1.0 / (dx * dx);
     const double ky = 1.0 / (dy * dy);
 
-    double stencil_internal[] = {-2.0 * (kx + ky), kx, kx, ky, ky};
-    double stencil_dirichlet[] = {1.0, 0.0, 0.0, 0.0, 0.0};
-    double stencil_neumann[] = {-2.0 * (kx + ky), 0.0, 0.0, 0.0, 0.0};
-
-    for (int i = 1; i < sx - 1; ++i) {
-        for (int j = 1; j < sy - 1; ++j) {
+    for (int i = 0; i < sx; ++i) {
+        for (int j = 0; j < sy; ++j) {
             int index[] = {i, j};
 
             switch (cells_(i, j).cell_type) {
                 case CellType::Internal: {
+                    double stencil_internal[] = {-2.0 * (kx + ky), kx, kx, ky, ky};
+
                     for (int p = 1; p < 5; ++p) {
                         const int pos[] = {i + stencil_offsets[p][0], j + stencil_offsets[p][1]};
                         if (get_cell(pos[0], pos[1]) == CellType::BoundaryDirichlet) {
@@ -122,8 +120,6 @@ void StructPoissonSolver::Impl::set_stencils() {
                                 {{i, j},
                                  {stencil_offsets[p][0], stencil_offsets[p][1]},
                                  cells_(pos[0], pos[1]).region});
-                        } else {
-                            stencil_internal[p] = kx;
                         }
                     }
 
@@ -132,11 +128,14 @@ void StructPoissonSolver::Impl::set_stencils() {
                     break;
                 }
                 case CellType::BoundaryDirichlet: {
-                    HYPRE_StructMatrixSetValues(hypre_A_, index, 5, stencil_indices,
+                    double stencil_dirichlet[] = {1.0};
+                    HYPRE_StructMatrixSetValues(hypre_A_, index, 1, stencil_indices,
                                                 stencil_dirichlet);
                     break;
                 }
                 case CellType::BoundaryNeumann: {
+                    double stencil_neumann[] = {-2.0 * (kx + ky), kx, kx, ky, ky};
+
                     // check x
                     if (get_cell(i - 1, j) == CellType::External) {
                         stencil_neumann[1] = 0.0;
@@ -144,9 +143,6 @@ void StructPoissonSolver::Impl::set_stencils() {
                     } else if (get_cell(i + 1, j) == CellType::External) {
                         stencil_neumann[1] = 2.0 * kx;
                         stencil_neumann[2] = 0.0;
-                    } else {
-                        stencil_neumann[1] = kx;
-                        stencil_neumann[2] = kx;
                     }
 
                     // check y
@@ -156,9 +152,6 @@ void StructPoissonSolver::Impl::set_stencils() {
                     } else if (get_cell(i, j + 1) == CellType::External) {
                         stencil_neumann[3] = 2.0 * ky;
                         stencil_neumann[4] = 0.0;
-                    } else {
-                        stencil_neumann[3] = ky;
-                        stencil_neumann[4] = ky;
                     }
 
                     HYPRE_StructMatrixSetValues(hypre_A_, index, 5, stencil_indices,
@@ -207,26 +200,26 @@ void StructPoissonSolver::Impl::solve(Matrix<2>& out, const Matrix<2>& rho) {
         HYPRE_StructVectorSetBoxValues(hypre_b_, ilower, iupper, cache.data());
     }
 
-    // const auto [dx, dy] = prop_.dx;
-    // for (const auto& [region_type, lower_left, upper_right, input] : boundaries_) {
-    //     if (region_type == CellType::BoundaryDirichlet && input) {
-    //         input_cache_.resize({static_cast<size_t>(upper_right.x - lower_left.x + 1),
-    //                              static_cast<size_t>(upper_right.y - lower_left.y + 1)});
-    //         input_cache_.fill(input() / (-dx * dx));
-    //         int ilower[] = {lower_left.x, lower_left.y};
-    //         int iupper[] = {upper_right.x, upper_right.y};
-    //         HYPRE_StructVectorSetBoxValues(hypre_b_, ilower, iupper, input_cache_.data_ptr());
-    //     }
-    // }
-
     const auto [dx, dy] = prop_.dx;
+
+    for (const auto& [region_type, lower_left, upper_right, input] : boundaries_) {
+        if (region_type == CellType::BoundaryDirichlet && input) {
+            input_cache_.resize({static_cast<size_t>(upper_right.x - lower_left.x + 1),
+                                 static_cast<size_t>(upper_right.y - lower_left.y + 1)});
+            input_cache_.fill(input());
+            int ilower[] = {lower_left.x, lower_left.y};
+            int iupper[] = {upper_right.x, upper_right.y};
+            HYPRE_StructVectorSetBoxValues(hypre_b_, ilower, iupper, input_cache_.data_ptr());
+        }
+    }
+
     const double kx = -1.0 / (dx * dx);
     const double ky = -1.0 / (dy * dy);
 
-    for (auto n : boundary_refs_) {
-        int idx[] = {n.pos.x, n.pos.y};
-        double k = n.offset.x != 0 ? kx : ky;
-        HYPRE_StructVectorAddToValues(hypre_b_, idx, n.boundary->input() * k);
+    for (auto [pos, offset, boundary] : boundary_refs_) {
+        int idx[] = {pos.x, pos.y};
+        const double kxy = offset.x != 0 ? kx : ky;
+        HYPRE_StructVectorAddToValues(hypre_b_, idx, boundary->input() * kxy);
     }
 
     HYPRE_StructSMGCreate(MPI_COMM_WORLD, &hypre_solver_);
@@ -235,10 +228,12 @@ void StructPoissonSolver::Impl::solve(Matrix<2>& out, const Matrix<2>& rho) {
     HYPRE_StructSMGSolve(hypre_solver_, hypre_A_, hypre_b_, hypre_x_);
 
     {
-        int ilower[] = {1, 1};
-        int iupper[] = {prop_.extents.x - 2, prop_.extents.y - 2};
         out.resize(prop_.extents.to<size_t>());
-        HYPRE_StructVectorGetBoxValues(hypre_x_, ilower, iupper, out.data_ptr());
+        for (int i = 0; i < prop_.extents.x; ++i) {
+            int idx1[] = {i, 0};
+            int idx2[] = {i, prop_.extents.y - 1};
+            HYPRE_StructVectorGetBoxValues(hypre_x_, idx1, idx2, &out(i, 0));
+        }
     }
 
     HYPRE_StructSMGDestroy(hypre_solver_);
