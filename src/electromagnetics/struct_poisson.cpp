@@ -11,6 +11,7 @@ using namespace spark::core;
 
 namespace {
 int stencil_indices[5] = {0, 1, 2, 3, 4};
+int opposite_indices[] = {0, 2, 1, 4, 3};
 int stencil_offsets[5][2] = {{0, 0}, {-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 constexpr double solver_tolerance = 1e-6;
 }  // namespace
@@ -103,65 +104,45 @@ void StructPoissonSolver::Impl::set_stencils() {
 
     const double kx = 1.0 / (dx * dx);
     const double ky = 1.0 / (dy * dy);
+    const double opposite_k[] = {0.0, kx, kx, ky, ky};
 
     for (int i = 0; i < sx; ++i) {
         for (int j = 0; j < sy; ++j) {
             int index[] = {i, j};
 
-            switch (cells_(i, j).cell_type) {
-                case CellType::Internal: {
-                    double stencil_internal[] = {-2.0 * (kx + ky), kx, kx, ky, ky};
+            auto cell = cells_(i, j).cell_type;
 
-                    for (int p = 1; p < 5; ++p) {
-                        const int pos[] = {i + stencil_offsets[p][0], j + stencil_offsets[p][1]};
-                        if (get_cell(pos[0], pos[1]) == CellType::BoundaryDirichlet) {
-                            stencil_internal[p] = 0.0;
-                            boundary_refs_.push_back(
-                                {{i, j},
-                                 {stencil_offsets[p][0], stencil_offsets[p][1]},
-                                 cells_(pos[0], pos[1]).region});
-                        }
-                    }
+            if (cell == CellType::BoundaryDirichlet) {
+                double stencil_dirichlet[] = {1.0};
+                HYPRE_StructMatrixSetValues(hypre_A_, index, 1, stencil_indices, stencil_dirichlet);
+                continue;
+            }
 
-                    HYPRE_StructMatrixSetValues(hypre_A_, index, 5, stencil_indices,
-                                                stencil_internal);
-                    break;
+            double stencil[] = {-2.0 * (kx + ky), kx, kx, ky, ky};
+
+            for (int p = 1; p < 5; ++p) {
+                const int neighbor_pos[] = {i + stencil_offsets[p][0], j + stencil_offsets[p][1]};
+                const auto neighbor_type = get_cell(neighbor_pos[0], neighbor_pos[1]);
+
+                if (neighbor_type == CellType::BoundaryDirichlet) {
+                    stencil[p] = 0.0;
+                    boundary_refs_.push_back({{i, j},
+                                              {stencil_offsets[p][0], stencil_offsets[p][1]},
+                                              cells_(neighbor_pos[0], neighbor_pos[1]).region});
                 }
-                case CellType::BoundaryDirichlet: {
-                    double stencil_dirichlet[] = {1.0};
-                    HYPRE_StructMatrixSetValues(hypre_A_, index, 1, stencil_indices,
-                                                stencil_dirichlet);
-                    break;
+
+                if (cell == CellType::BoundaryNeumann && neighbor_type == CellType::External) {
+                    stencil[p] = 0.0;
+                    stencil[opposite_indices[p]] = 2.0 * opposite_k[p];
                 }
-                case CellType::BoundaryNeumann: {
-                    double stencil_neumann[] = {-2.0 * (kx + ky), kx, kx, ky, ky};
 
-                    // check x
-                    if (get_cell(i - 1, j) == CellType::External) {
-                        stencil_neumann[1] = 0.0;
-                        stencil_neumann[2] = 2.0 * kx;
-                    } else if (get_cell(i + 1, j) == CellType::External) {
-                        stencil_neumann[1] = 2.0 * kx;
-                        stencil_neumann[2] = 0.0;
-                    }
-
-                    // check y
-                    if (get_cell(i, j - 1) == CellType::External) {
-                        stencil_neumann[3] = 0.0;
-                        stencil_neumann[4] = 2.0 * ky;
-                    } else if (get_cell(i, j + 1) == CellType::External) {
-                        stencil_neumann[3] = 2.0 * ky;
-                        stencil_neumann[4] = 0.0;
-                    }
-
-                    HYPRE_StructMatrixSetValues(hypre_A_, index, 5, stencil_indices,
-                                                stencil_neumann);
-                    break;
-                }
-                default: {
-                    break;
+                if (cell == CellType::Internal && neighbor_type == CellType::External) {
+                    // warning!
+                    printf("Warning: internal node [%d, %d] at boundary!", i, j);
                 }
             }
+
+            HYPRE_StructMatrixSetValues(hypre_A_, index, 5, stencil_indices, stencil);
         }
     }
 }
