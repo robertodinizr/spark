@@ -2,6 +2,7 @@
 #include <spark/constants/constants.h>
 
 #include "_hypre_utilities.h"
+#include "log/log.h"
 #include "spark/core/matrix.h"
 #include "spark/core/vec.h"
 #include "spark/electromagnetics/poisson.h"
@@ -138,8 +139,8 @@ void StructPoissonSolver::Impl::set_stencils() {
 
                 if (cell == CellType::Internal && neighbor_type == CellType::External) {
                     // warning!
-                    printf("Warning: internal node [%d, %d] at boundary with offset [%d, %d]!", i,
-                           j, stencil_offsets[p][0], stencil_offsets[p][1]);
+                    SPARK_LOG_WARN("internal node [%d, %d] at boundary with offset [%d, %d]!", i, j,
+                                   stencil_offsets[p][0], stencil_offsets[p][1]);
                 }
             }
 
