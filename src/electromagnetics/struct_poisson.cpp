@@ -138,7 +138,8 @@ void StructPoissonSolver::Impl::set_stencils() {
 
                 if (cell == CellType::Internal && neighbor_type == CellType::External) {
                     // warning!
-                    printf("Warning: internal node [%d, %d] at boundary!", i, j);
+                    printf("Warning: internal node [%d, %d] at boundary with offset [%d, %d]!", i,
+                           j, stencil_offsets[p][0], stencil_offsets[p][1]);
                 }
             }
 
