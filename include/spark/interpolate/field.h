@@ -1,7 +1,6 @@
 #pragma once
 
 #include "spark/particle/species.h"
-#include "spark/spatial/grid.h"
 
 namespace spark::interpolate {
 

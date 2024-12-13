@@ -6,14 +6,14 @@
 namespace {
 template <unsigned NV>
 void weight_to_grid(const spark::particle::ChargedSpecies<1, NV>& species,
-                    spark::spatial::UniformGrid& out) {
+                    spark::spatial::UniformGrid<1>& out) {
     const size_t n = species.n();
     auto* x = species.x();
 
     out.set(0.0);
 
-    const double dx = out.dx();
-    auto& g = out.data();
+    const double dx = out.dx().x;
+    auto& g = out.data().data();
     const double mdx = 1.0 / dx;
 
     for (size_t i = 0; i < n; i++) {
@@ -32,11 +32,13 @@ void weight_to_grid(const spark::particle::ChargedSpecies<1, NV>& species,
 
 template <class GridType, unsigned NX, unsigned NV>
 void spark::interpolate::weight_to_grid(const spark::particle::ChargedSpecies<NX, NV>& species,
-                                     GridType& out) {
+                                        GridType& out) {
     ::weight_to_grid(species, out);
 }
 
-template void spark::interpolate::weight_to_grid(const spark::particle::ChargedSpecies<1, 1>& species,
-                                              spark::spatial::UniformGrid& out);
-template void spark::interpolate::weight_to_grid(const spark::particle::ChargedSpecies<1, 3>& species,
-                                              spark::spatial::UniformGrid& out);
+template void spark::interpolate::weight_to_grid(
+    const spark::particle::ChargedSpecies<1, 1>& species,
+    spark::spatial::UniformGrid<1>& out);
+template void spark::interpolate::weight_to_grid(
+    const spark::particle::ChargedSpecies<1, 3>& species,
+    spark::spatial::UniformGrid<1>& out);

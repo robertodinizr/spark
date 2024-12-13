@@ -1,18 +1,13 @@
 include(cmake/cpm.cmake)
 
-# Eigen
+CPMAddPackage("gh:luihabl/parallel-hashmap#master")
 
 CPMAddPackage(
-  NAME Eigen
-  VERSION 3.4.0
-  URL https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz
-  # Eigen's CMakelists are not intended for library use
-  DOWNLOAD_ONLY YES
+        NAME hypre
+        GITHUB_REPOSITORY "hypre-space/hypre"
+        VERSION 2.32.0
+        SOURCE_SUBDIR src
+        OPTIONS
+        "HYPRE_WITH_MPI Off"
+        "HYPRE_ENABLE_SHARED Off"
 )
-
-if(Eigen_ADDED)
-  add_library(Eigen INTERFACE IMPORTED)
-  target_include_directories(Eigen INTERFACE ${Eigen_SOURCE_DIR})
-endif()
-
-CPMAddPackage("gh:luihabl/parallel-hashmap#master")

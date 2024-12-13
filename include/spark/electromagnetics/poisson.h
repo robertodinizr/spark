@@ -1,5 +1,8 @@
 #pragma once
 
+#include <spark/core/vec.h>
+
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -7,31 +10,9 @@
 
 namespace spark::electromagnetics {
 
-class SymmetricPoissonSolver {
-private:
-    struct SolverImpl;
-    std::unique_ptr<SolverImpl> m_impl;
-
+class DirichletPoissonSolver1D {
 public:
-    SymmetricPoissonSolver();
-    SymmetricPoissonSolver(size_t n, double dx);
-    ~SymmetricPoissonSolver();
-
-    // Copy constructor and assignment operator deleted
-    SymmetricPoissonSolver(const SymmetricPoissonSolver&) = delete;
-    SymmetricPoissonSolver& operator=(const SymmetricPoissonSolver&) = delete;
-
-    // Move constructor and assignment operator
-    SymmetricPoissonSolver(SymmetricPoissonSolver&& other) noexcept;
-    SymmetricPoissonSolver& operator=(SymmetricPoissonSolver&& other) noexcept;
-
-    void solve(const std::vector<double>& density, std::vector<double>& out);
-    void grad(std::vector<double>& out);
-};
-
-class DirichletPoissonSolver {
-public:
-    DirichletPoissonSolver(size_t n, double dx);
+    DirichletPoissonSolver1D(size_t n, double dx);
     void solve(const std::vector<double>& density, std::vector<double>& out, double v0, double v1);
     void efield(const std::vector<double>& phi, std::vector<double>& out);
 
@@ -49,7 +30,32 @@ private:
 };
 
 void charge_density(double particle_weight,
-                    const spark::spatial::UniformGrid& ion_density,
-                    const spark::spatial::UniformGrid& electron_density,
-                    spark::spatial::UniformGrid& out);
+                    const spark::spatial::UniformGrid<1>& ion_density,
+                    const spark::spatial::UniformGrid<1>& electron_density,
+                    spark::spatial::UniformGrid<1>& out);
+
+enum class CellType : uint8_t { Internal, External, BoundaryDirichlet, BoundaryNeumann };
+
+class StructPoissonSolver {
+public:
+    struct Region {
+        CellType region_type = CellType::Internal;
+        core::IntVec<2> lower_left, upper_right;
+        std::function<double()> input;
+    };
+
+    struct DomainProp {
+        core::IntVec<2> extents;
+        core::Vec<2> dx;
+    };
+
+    explicit StructPoissonSolver(const DomainProp& prop, const std::vector<Region>& regions);
+    void solve(core::Matrix<2>& out, const core::Matrix<2>& rho);
+    ~StructPoissonSolver();
+
+private:
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
+};
+
 }  // namespace spark::electromagnetics
