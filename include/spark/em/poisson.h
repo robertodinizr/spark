@@ -8,7 +8,7 @@
 
 #include "spark/spatial/grid.h"
 
-namespace spark::electromagnetics {
+namespace spark::em {
 
 class DirichletPoissonSolver1D {
 public:
@@ -58,4 +58,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace spark::electromagnetics
+}  // namespace spark::em

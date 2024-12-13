@@ -26,11 +26,11 @@ add_library(spark STATIC
         src/spatial/grid.cpp
         src/interpolate/weight.cpp
         src/interpolate/field.cpp
-        src/electromagnetics/struct_poisson.cpp
+        src/em/struct_poisson.cpp
         src/collisions/mcc.cpp
         src/collisions/scattering.cpp
-        src/electromagnetics/thomas_poisson.cpp
-        src/electromagnetics/util.cpp
+        src/em/thomas_poisson.cpp
+        src/em/util.cpp
         include/spark/core/matrix.h
 )
 

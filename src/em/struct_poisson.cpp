@@ -5,9 +5,9 @@
 #include "log/log.h"
 #include "spark/core/matrix.h"
 #include "spark/core/vec.h"
-#include "spark/electromagnetics/poisson.h"
+#include "spark/em/poisson.h"
 
-using namespace spark::electromagnetics;
+using namespace spark::em;
 using namespace spark::core;
 
 namespace {

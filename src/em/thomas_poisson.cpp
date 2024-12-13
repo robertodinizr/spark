@@ -1,7 +1,7 @@
 #include "spark/constants/constants.h"
-#include "spark/electromagnetics/poisson.h"
+#include "spark/em/poisson.h"
 
-using namespace spark::electromagnetics;
+using namespace spark::em;
 
 DirichletPoissonSolver1D::DirichletPoissonSolver1D(size_t n, double dx) : m_n(n), m_dx(dx) {}
 
