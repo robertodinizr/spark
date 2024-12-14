@@ -47,7 +47,7 @@ public:
 
     std::vector<T>& data() { return data_; }
     const std::vector<T>& data() const { return data_; }
-    T* data_ptr() const { return const_cast<double*>(data_.data()); }
+    T* data_ptr() const { return const_cast<T*>(data_.data()); }
 
     auto begin() { return data_.begin(); }
     auto end() { return data_.end(); }

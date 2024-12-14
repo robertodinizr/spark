@@ -3,7 +3,6 @@
 #include <cmath>
 
 namespace spark::core {
-
 template <typename T, unsigned N>
 struct TVec {
     T norm() const;
@@ -57,6 +56,51 @@ struct TVec<T, 3> {
         return TVec<G, 3>{static_cast<G>(x), static_cast<G>(y), static_cast<G>(z)};
     }
 };
+
+#define DECLARE_VEC_OPS(OP)                                                   \
+    template <typename T, unsigned N>                                         \
+    inline TVec<T, N> operator OP(const T & a, const TVec<T, N>& b) {         \
+        if constexpr (N == 1) {                                               \
+            return {a OP b.x};                                                \
+        } else if constexpr (N == 2) {                                        \
+            return {a OP b.x, a OP b.y};                                      \
+        } else if constexpr (N == 3) {                                        \
+            return {a + b.x, a OP b.y, a OP b.z};                             \
+        } else {                                                              \
+            return {};                                                        \
+        }                                                                     \
+    }                                                                         \
+    template <typename T, unsigned N>                                         \
+    inline TVec<T, N> operator OP(const TVec<T, N>& b, const T & a) {         \
+        if constexpr (N == 1) {                                               \
+            return {a OP b.x};                                                \
+        } else if constexpr (N == 2) {                                        \
+            return {a OP b.x, a OP b.y};                                      \
+        } else if constexpr (N == 3) {                                        \
+            return {a + b.x, a OP b.y, a OP b.z};                             \
+        } else {                                                              \
+            return {};                                                        \
+        }                                                                     \
+    }                                                                         \
+    template <typename T, unsigned N>                                         \
+    inline TVec<T, N> operator OP(const TVec<T, N>& a, const TVec<T, N>& b) { \
+        if constexpr (N == 1) {                                               \
+            return {a.x OP b.x};                                              \
+        } else if constexpr (N == 2) {                                        \
+            return {a.x OP b.x, a.y OP b.y};                                  \
+        } else if constexpr (N == 3) {                                        \
+            return {a.x + b.x, a.y OP b.y, a.z OP b.z};                       \
+        } else {                                                              \
+            return {};                                                        \
+        }                                                                     \
+    }
+
+DECLARE_VEC_OPS(+)
+DECLARE_VEC_OPS(-)
+DECLARE_VEC_OPS(/)
+DECLARE_VEC_OPS(*)
+
+#undef DECLARE_VEC_OPS
 
 template <unsigned N>
 using Vec = TVec<double, N>;
