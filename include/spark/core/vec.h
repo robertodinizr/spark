@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cmath>
 
 namespace spark::core {
@@ -21,6 +22,8 @@ struct TVec<T, 1> {
     TVec<G, 1> to() const {
         return TVec<G, 1>{static_cast<G>(x)};
     }
+
+    std::array<T, 1> arr() { return {x}; }
 };
 
 template <typename T>
@@ -38,6 +41,8 @@ struct TVec<T, 2> {
     TVec<G, 2> to() const {
         return TVec<G, 2>{static_cast<G>(x), static_cast<G>(y)};
     }
+
+    std::array<T, 2> arr() { return {x, y}; }
 };
 
 template <typename T>
@@ -55,7 +60,25 @@ struct TVec<T, 3> {
     TVec<G, 3> to() const {
         return TVec<G, 3>{static_cast<G>(x), static_cast<G>(y), static_cast<G>(z)};
     }
+
+    std::array<T, 3> arr() { return {x, y, z}; }
 };
+
+template <typename T, unsigned N>
+inline bool operator==(TVec<T, N>& a, TVec<T, N>& b) {
+    if constexpr (N == 1) {
+        return a.x == b.x;
+    } else if constexpr (N == 2) {
+        return (a.x == b.x) && (a.y == b.y);
+    } else if constexpr (N == 3) {
+        return (a.x == b.x) && (a.y == b.y) && (a.z == b.z);
+    }
+}
+
+template <typename T, unsigned N>
+inline bool operator!=(TVec<T, N>& a, TVec<T, N>& b) {
+    return !(a == b);
+}
 
 #define DECLARE_VEC_OPS(OP)                                                   \
     template <typename T, unsigned N>                                         \

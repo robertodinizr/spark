@@ -2,6 +2,14 @@
 
 using namespace spark;
 
+namespace {
+template <typename T>
+T clamp(T min, T max, T d) {
+    const double t = d < min ? min : d;
+    return t > max ? max : t;
+}
+}  // namespace
+
 template <>
 void em::electric_field<1>(const spatial::UniformGrid<1>& phi,
                            core::TMatrix<core::Vec<1>, 1>& out) {
@@ -23,20 +31,13 @@ void em::electric_field<1>(const spatial::UniformGrid<1>& phi,
     // eout[n-1] = - (phi[n-1] - phi[n-2]) / dx;
 }
 
-template <typename T>
-T clamp(T min, T max, T d) {
-    const double t = d < min ? min : d;
-    return t > max ? max : t;
-}
-
 template <>
 void em::electric_field<2>(const spatial::UniformGrid<2>& phi,
                            core::TMatrix<core::Vec<2>, 2>& out) {
     out.resize(phi.n());
     const auto [nx, ny] = out.size().to<int>();
     const auto& phi_mat = phi.data();
-    const double kx = -1.0 / (phi.dx().x);
-    const double ky = -1.0 / (phi.dx().y);
+    const auto [kx, ky] = -1.0 / phi.dx();
 
     for (int i = 0; i < nx; ++i) {
         for (int j = 0; j < ny; ++j) {
