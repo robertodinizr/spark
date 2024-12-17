@@ -47,8 +47,8 @@ void em::electric_field<2>(const spatial::UniformGrid<2>& phi,
             const int i0 = clamp(0, nx - 1, i - 1);
 
             // TODO(lui): check if boundary is better implemented as in the 1D case.
-            out(i, j) = {kx * (phi_mat(i1, j) - phi_mat(i0, j) / static_cast<double>(i1 - i0)),
-                         ky * (phi_mat(i, j1) - phi_mat(i, j0) / static_cast<double>(j1 - j0))};
+            out(i, j) = {kx * (phi_mat(i1, j) - phi_mat(i0, j)) / static_cast<double>(i1 - i0),
+                         ky * (phi_mat(i, j1) - phi_mat(i, j0)) / static_cast<double>(j1 - j0)};
         }
     }
 }

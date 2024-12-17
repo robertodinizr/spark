@@ -94,6 +94,9 @@ public:
             return data_[IDX3D(ij.x, ij.y, ij.k)];
     }
 
+    T operator[](size_t i) const { return data_[i]; }
+    T& operator[](size_t i) { return data_[i]; }
+
 #undef IDX2D
 #undef IDX3D
 
