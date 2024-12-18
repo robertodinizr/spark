@@ -8,17 +8,19 @@
 namespace spark::spatial {
 
 template <unsigned N>
+struct GridProp {
+    core::Vec<N> l_;
+    core::Vec<N> dx_;
+};
+
+template <unsigned N>
 class UniformGrid {
 public:
     UniformGrid() = default;
-    UniformGrid(const std::array<double, N>& l, const core::ULongVec<N>& n) {
+    UniformGrid(const core::Vec<N>& l, const core::ULongVec<N>& n) {
         l_ = l;
         data_.resize(n);
-
-        for (unsigned i = 0; i < N; i++) {
-            dx_[i] = l[i] / static_cast<double>(n[i] - 1);
-        }
-
+        dx_ = l / (n.template to<double>() - 1.0);
         set(0.0);
     }
 

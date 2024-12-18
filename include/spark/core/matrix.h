@@ -47,7 +47,7 @@ public:
 
     std::vector<T>& data() { return data_; }
     const std::vector<T>& data() const { return data_; }
-    T* data_ptr() const { return const_cast<double*>(data_.data()); }
+    T* data_ptr() const { return const_cast<T*>(data_.data()); }
 
     auto begin() { return data_.begin(); }
     auto end() { return data_.end(); }
@@ -93,6 +93,9 @@ public:
         else
             return data_[IDX3D(ij.x, ij.y, ij.k)];
     }
+
+    T operator[](size_t i) const { return data_[i]; }
+    T& operator[](size_t i) { return data_[i]; }
 
 #undef IDX2D
 #undef IDX3D

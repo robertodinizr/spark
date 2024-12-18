@@ -5,9 +5,9 @@
 #include "log/log.h"
 #include "spark/core/matrix.h"
 #include "spark/core/vec.h"
-#include "spark/electromagnetics/poisson.h"
+#include "spark/em/poisson.h"
 
-using namespace spark::electromagnetics;
+using namespace spark::em;
 using namespace spark::core;
 
 namespace {
@@ -17,9 +17,9 @@ int stencil_offsets[5][2] = {{0, 0}, {-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 constexpr double solver_tolerance = 1e-6;
 }  // namespace
 
-StructPoissonSolver::~StructPoissonSolver() = default;
+StructPoissonSolver2D::~StructPoissonSolver2D() = default;
 
-struct StructPoissonSolver::Impl {
+struct StructPoissonSolver2D::Impl {
     HYPRE_StructGrid hypre_grid_ = nullptr;
     HYPRE_StructStencil hypre_stencil_ = nullptr;
     HYPRE_StructMatrix hypre_A_ = nullptr;
@@ -61,12 +61,12 @@ private:
     std::vector<BoundaryRef> boundary_refs_;
 };
 
-StructPoissonSolver::Impl::Impl(const DomainProp& prop, const std::vector<Region>& boundaries)
+StructPoissonSolver2D::Impl::Impl(const DomainProp& prop, const std::vector<Region>& boundaries)
     : boundaries_(boundaries), prop_(prop) {
     input_cache_.resize(prop.extents.to<size_t>());
 }
 
-void StructPoissonSolver::Impl::create_grid() {
+void StructPoissonSolver2D::Impl::create_grid() {
     HYPRE_StructGridCreate(MPI_COMM_WORLD, 2, &hypre_grid_);
 
     int lower[] = {0, 0};
@@ -75,7 +75,7 @@ void StructPoissonSolver::Impl::create_grid() {
 
     HYPRE_StructGridAssemble(hypre_grid_);
 }
-void StructPoissonSolver::Impl::create_matrices() {
+void StructPoissonSolver2D::Impl::create_matrices() {
     HYPRE_StructStencilCreate(2, 5, &hypre_stencil_);
     HYPRE_StructMatrixCreate(MPI_COMM_WORLD, hypre_grid_, hypre_stencil_, &hypre_A_);
     HYPRE_StructMatrixInitialize(hypre_A_);
@@ -85,12 +85,12 @@ void StructPoissonSolver::Impl::create_matrices() {
     HYPRE_StructVectorInitialize(hypre_b_);
     HYPRE_StructVectorInitialize(hypre_x_);
 }
-void StructPoissonSolver::Impl::create_stencil() {
+void StructPoissonSolver2D::Impl::create_stencil() {
     for (int n = 0; n < 5; n++)
         HYPRE_StructStencilSetElement(hypre_stencil_, n, &stencil_offsets[n][0]);
 }
 
-void StructPoissonSolver::Impl::set_cells() {
+void StructPoissonSolver2D::Impl::set_cells() {
     cells_.resize(ULongVec<2>(prop_.extents.x, prop_.extents.y));
     cells_.fill({});
 
@@ -99,7 +99,7 @@ void StructPoissonSolver::Impl::set_cells() {
     }
 }
 
-void StructPoissonSolver::Impl::set_stencils() {
+void StructPoissonSolver2D::Impl::set_stencils() {
     const auto [sx, sy] = cells_.size();
     const auto [dx, dy] = prop_.dx;
 
@@ -148,7 +148,7 @@ void StructPoissonSolver::Impl::set_stencils() {
         }
     }
 }
-CellType StructPoissonSolver::Impl::get_cell(int i, int j) {
+CellType StructPoissonSolver2D::Impl::get_cell(int i, int j) {
     if (i >= 0 && i < prop_.extents.x && j >= 0 && j < prop_.extents.y) {
         return cells_(i, j).cell_type;
     }
@@ -156,7 +156,7 @@ CellType StructPoissonSolver::Impl::get_cell(int i, int j) {
     return CellType::External;
 }
 
-void StructPoissonSolver::Impl::assemble() {
+void StructPoissonSolver2D::Impl::assemble() {
     create_grid();
     set_cells();
 
@@ -166,7 +166,7 @@ void StructPoissonSolver::Impl::assemble() {
 
     HYPRE_StructMatrixAssemble(hypre_A_);
 }
-void StructPoissonSolver::Impl::solve(Matrix<2>& out, const Matrix<2>& rho) {
+void StructPoissonSolver2D::Impl::solve(Matrix<2>& out, const Matrix<2>& rho) {
     HYPRE_StructVectorSetConstantValues(hypre_x_, 0.0);
     HYPRE_StructVectorSetConstantValues(hypre_b_, 0.0);
 
@@ -222,7 +222,7 @@ void StructPoissonSolver::Impl::solve(Matrix<2>& out, const Matrix<2>& rho) {
     HYPRE_StructSMGDestroy(hypre_solver_);
 }
 
-StructPoissonSolver::Impl::~Impl() {
+StructPoissonSolver2D::Impl::~Impl() {
     if (hypre_grid_)
         HYPRE_StructGridDestroy(hypre_grid_);
     if (hypre_stencil_)
@@ -235,12 +235,12 @@ StructPoissonSolver::Impl::~Impl() {
         HYPRE_StructVectorDestroy(hypre_x_);
 }
 
-StructPoissonSolver::StructPoissonSolver(const StructPoissonSolver::DomainProp& prop,
-                                         const std::vector<Region>& regions)
+StructPoissonSolver2D::StructPoissonSolver2D(const StructPoissonSolver2D::DomainProp& prop,
+                                             const std::vector<Region>& regions)
     : impl_(std::make_unique<Impl>(prop, regions)) {
     impl_->assemble();
 }
 
-void StructPoissonSolver::solve(core::Matrix<2>& out, const core::Matrix<2>& rho) {
+void StructPoissonSolver2D::solve(core::Matrix<2>& out, const core::Matrix<2>& rho) {
     impl_->solve(out, rho);
 }
