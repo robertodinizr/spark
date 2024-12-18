@@ -88,7 +88,7 @@ inline bool operator!=(TVec<T, N>& a, TVec<T, N>& b) {
         } else if constexpr (N == 2) {                                        \
             return {a OP b.x, a OP b.y};                                      \
         } else if constexpr (N == 3) {                                        \
-            return {a + b.x, a OP b.y, a OP b.z};                             \
+            return {a OP b.x, a OP b.y, a OP b.z};                            \
         } else {                                                              \
             return {};                                                        \
         }                                                                     \
@@ -96,11 +96,11 @@ inline bool operator!=(TVec<T, N>& a, TVec<T, N>& b) {
     template <typename T, unsigned N>                                         \
     inline TVec<T, N> operator OP(const TVec<T, N>& b, const T & a) {         \
         if constexpr (N == 1) {                                               \
-            return {a OP b.x};                                                \
+            return {b.x OP a};                                                \
         } else if constexpr (N == 2) {                                        \
-            return {a OP b.x, a OP b.y};                                      \
+            return {b.x OP a, b.y OP a};                                      \
         } else if constexpr (N == 3) {                                        \
-            return {a + b.x, a OP b.y, a OP b.z};                             \
+            return {b.x OP a, b.y OP a, b.z OP a};                            \
         } else {                                                              \
             return {};                                                        \
         }                                                                     \
@@ -112,7 +112,7 @@ inline bool operator!=(TVec<T, N>& a, TVec<T, N>& b) {
         } else if constexpr (N == 2) {                                        \
             return {a.x OP b.x, a.y OP b.y};                                  \
         } else if constexpr (N == 3) {                                        \
-            return {a.x + b.x, a.y OP b.y, a.z OP b.z};                       \
+            return {a.x OP b.x, a.y OP b.y, a.z OP b.z};                      \
         } else {                                                              \
             return {};                                                        \
         }                                                                     \
