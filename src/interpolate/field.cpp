@@ -4,37 +4,82 @@
 
 #include "spark/particle/species.h"
 
+using namespace spark;
+using namespace spark::core;
+
 namespace {
-template <unsigned NV>
-void field_at_particles(const spark::spatial::UniformGrid<1>& field,
-                        spark::particle::ChargedSpecies<1, NV>& species) {
+
+template <typename T, unsigned NV>
+void field_at_particles(const spatial::TUniformGrid<T, 1>& field,
+                        const particle::ChargedSpecies<1, NV>& species,
+                        TMatrix<T, 1>& out) {
     const size_t n = species.n();
-    auto* f = species.f();
+    out.resize({n});
+
     auto* x = species.x();
 
     const double dx = field.dx().x;
-    const double* e = field.data_ptr();
+    const auto& f = field.data();
     const double mdx = 1.0 / dx;
 
     for (size_t i = 0; i < n; i++) {
         const double xp_dx = x[i].x * mdx;
         const double il = floor(xp_dx);
-        const size_t ils = static_cast<size_t>(il);
+        const auto ils = static_cast<size_t>(il);
 
-        f[i] = {e[ils] * (il + 1.0 - xp_dx) + e[ils + 1] * (xp_dx - il)};
+        out[i] = f[ils] * (il + 1.0 - xp_dx) + f[ils + 1] * (xp_dx - il);
     }
 }
-}  // namespace
 
-template <class FieldType, unsigned NX, unsigned NV>
-void spark::interpolate::field_at_particles(const FieldType& field,
-                                            spark::particle::ChargedSpecies<NX, NV>& species) {
-    ::field_at_particles(field, species);
+template <typename T, unsigned NV>
+void field_at_particles(const spatial::TUniformGrid<T, 2>& field,
+                        const particle::ChargedSpecies<2, NV>& species,
+                        TMatrix<T, 1>& out) {
+    const size_t n = species.n();
+    out.resize({n});
+
+    auto* x = species.x();
+
+    const auto dx = field.dx();
+    const auto& f = field.data();
+    const auto mdx = 1.0 / dx;
+    const double mat = mdx.x * mdx.y;
+
+    for (size_t i = 0; i < n; ++i) {
+        const auto xp = x[i] * mdx;
+        const auto xmesh_lower_left = xp.template apply<std::floor>();
+        const auto xmesh_upper_right = xmesh_lower_left + 1.0;
+        const auto idx = xmesh_lower_left.template to<size_t>();
+
+        const double a1 = (xmesh_upper_right.x - xp.x) * (xmesh_upper_right.y - xp.y);
+        const double a2 = (xp.x - xmesh_lower_left.x) * (xmesh_upper_right.y - xp.y);
+        const double a3 = (xp.x - xmesh_lower_left.x) * (xp.y - xmesh_lower_left.y);
+        const double a4 = (xmesh_upper_right.x - xp.x) * (xp.y - xmesh_lower_left.y);
+
+        out[i] = (a1 * f(idx.x, idx.y) + a2 * f(idx.x + 1, idx.y) + a3 * f(idx.x + 1, idx.y + 1) +
+                  a4 * f(idx.x, idx.y + 1)) *
+                 mat;
+    }
 }
 
-template void spark::interpolate::field_at_particles(
-    const spark::spatial::UniformGrid<1>& field,
-    spark::particle::ChargedSpecies<1, 1>& species);
-template void spark::interpolate::field_at_particles(
-    const spark::spatial::UniformGrid<1>& field,
-    spark::particle::ChargedSpecies<1, 3>& species);
+}  // namespace
+
+template <typename T, unsigned NX, unsigned NV>
+void spark::interpolate::field_at_particles(const spark::spatial::TUniformGrid<T, NX>& field,
+                                            const spark::particle::ChargedSpecies<NX, NV>& species,
+                                            core::TMatrix<T, 1>& out) {
+    ::field_at_particles(field, species, out);
+}
+
+template void interpolate::field_at_particles(const spatial::UniformGrid<1>& field,
+                                              const particle::ChargedSpecies<1, 1>& species,
+                                              Matrix<1>& out);
+template void interpolate::field_at_particles(const spatial::UniformGrid<1>& field,
+                                              const particle::ChargedSpecies<1, 3>& species,
+                                              Matrix<1>& out);
+template void interpolate::field_at_particles(const spatial::UniformGrid<2>& field,
+                                              const particle::ChargedSpecies<2, 3>& species,
+                                              Matrix<1>& out);
+template void interpolate::field_at_particles(const spatial::TUniformGrid<Vec<2>, 2>& field,
+                                              const particle::ChargedSpecies<2, 3>& species,
+                                              TMatrix<Vec<2>, 1>& out);
