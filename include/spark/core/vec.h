@@ -24,6 +24,11 @@ struct TVec<T, 1> {
     }
 
     std::array<T, 1> arr() { return {x}; }
+
+    template <auto Func(T)->T>
+    TVec apply() const {
+        return {Func(x)};
+    }
 };
 
 template <typename T>
@@ -43,6 +48,11 @@ struct TVec<T, 2> {
     }
 
     std::array<T, 2> arr() { return {x, y}; }
+
+    template <auto Func(T)->T>
+    TVec apply() const {
+        return {Func(x), Func(y)};
+    }
 };
 
 template <typename T>
@@ -62,6 +72,11 @@ struct TVec<T, 3> {
     }
 
     std::array<T, 3> arr() { return {x, y, z}; }
+
+    template <auto Func(T)->T>
+    TVec apply() const {
+        return {Func(x), Func(y), Func(z)};
+    }
 };
 
 template <typename T, unsigned N>

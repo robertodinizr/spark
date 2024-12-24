@@ -20,7 +20,6 @@ include(cmake/random.cmake)
 
 add_library(spark STATIC
         src/random/seed.cpp
-        src/particle/species.cpp
         src/particle/pusher.cpp
         src/particle/boundary.cpp
         src/spatial/grid.cpp
