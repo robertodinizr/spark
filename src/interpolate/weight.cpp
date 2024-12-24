@@ -44,6 +44,10 @@ void weight_to_grid(const spark::particle::ChargedSpecies<2, NV>& species,
     const double mdx = 1.0 / dx;
     const double mdy = 1.0 / dy;
 
+    const auto dims = out.n();
+    const size_t nx = dims.x;
+    const size_t ny = dims.y;
+
     for (size_t i = 0; i < n; i++) {
         const double xp_dx = x[i].x * mdx;
         const double yp_dy = x[i].y * mdy;
@@ -64,6 +68,21 @@ void weight_to_grid(const spark::particle::ChargedSpecies<2, NV>& species,
         grid_data(j, k + 1) += w_jk1;
         grid_data(j + 1, k + 1) += w_j1k1;
     }
+    for (size_t j = 0; j < nx; j++) {
+        grid_data(j, 0) *= 2.0;     
+        grid_data(j, ny-1) *= 2.0;  
+    }
+    
+    for (size_t k = 0; k < ny; k++) {
+        grid_data(0, k) *= 2.0;     
+        grid_data(nx-1, k) *= 2.0;  
+    }
+
+    grid_data(0, 0) *= 2.0;         
+    grid_data(0, ny-1) *= 2.0;      
+    grid_data(nx-1, 0) *= 2.0;      
+    grid_data(nx-1, ny-1) *= 2.0;   
+
 }
 }  // namespace
 
