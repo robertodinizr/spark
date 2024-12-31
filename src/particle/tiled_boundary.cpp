@@ -112,6 +112,12 @@ uint8_t TiledBoundary2D::cell(int i, int j) {
     return cells_(CMOD(i, sz.x), CMOD(j, sz.y));
 }
 
+uint8_t TiledBoundary2D::cell(const Vec<2>& pos) {
+    auto idx = (pos / gprop_.dx).apply<std::floor>().to<int>();
+    const auto sz = cells_.size().to<int>();
+    return cells_(CMOD(idx.x, sz.x), CMOD(idx.y, sz.y));
+}
+
 void TiledBoundary2D::add_boundary(const TiledBoundary& b, uint8_t id) {
     const auto imin = std::min(b.lower_left.x, b.upper_right.x);
     const auto imax = std::max(b.lower_left.x, b.upper_right.x);

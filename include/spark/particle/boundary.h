@@ -31,6 +31,7 @@ public:
 
     void apply(Species<2, 3>* species);
     uint8_t cell(int i, int j);
+    uint8_t cell(const core::Vec<2>& pos);
 
 private:
     void add_boundary(const TiledBoundary& boundary, uint8_t id);
