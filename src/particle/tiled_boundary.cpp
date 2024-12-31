@@ -99,12 +99,17 @@ namespace spark::particle {
 TiledBoundary2D::TiledBoundary2D(const spatial::GridProp<2>& grid_prop,
                                  const std::vector<TiledBoundary>& boundaries,
                                  double dt)
-    : gprop_(grid_prop), boundaries_(boundaries) {
+    : gprop_(grid_prop), boundaries_(boundaries), dt_(dt) {
     cells_.resize(grid_prop.n + padding_);
     for (uint8_t i = 0; i < boundaries_.size(); ++i) {
         // Add circular_mod
         add_boundary(boundaries_[i], i + 1);
     }
+}
+
+uint8_t TiledBoundary2D::cell(int i, int j) {
+    const auto sz = cells_.size().to<int>();
+    return cells_(CMOD(i, sz.x), CMOD(j, sz.y));
 }
 
 void TiledBoundary2D::add_boundary(const TiledBoundary& b, uint8_t id) {

@@ -24,11 +24,13 @@ struct TiledBoundary {
 
 class TiledBoundary2D {
 public:
+    TiledBoundary2D() = default;
     TiledBoundary2D(const spatial::GridProp<2>& grid_prop,
                     const std::vector<TiledBoundary>& boundaries,
                     double dt);
 
     void apply(Species<2, 3>* species);
+    uint8_t cell(int i, int j);
 
 private:
     void add_boundary(const TiledBoundary& boundary, uint8_t id);
