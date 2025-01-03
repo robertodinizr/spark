@@ -107,12 +107,12 @@ TiledBoundary2D::TiledBoundary2D(const spatial::GridProp<2>& grid_prop,
     }
 }
 
-uint8_t TiledBoundary2D::cell(int i, int j) {
+uint8_t TiledBoundary2D::cell(int i, int j) const {
     const auto sz = cells_.size().to<int>();
     return cells_(CMOD(i, sz.x), CMOD(j, sz.y));
 }
 
-uint8_t TiledBoundary2D::cell(const Vec<2>& pos) {
+uint8_t TiledBoundary2D::cell(const Vec<2>& pos) const {
     auto idx = (pos / gprop_.dx).apply<std::floor>().to<int>();
     const auto sz = cells_.size().to<int>();
     return cells_(CMOD(idx.x, sz.x), CMOD(idx.y, sz.y));

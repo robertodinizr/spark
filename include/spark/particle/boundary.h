@@ -30,8 +30,8 @@ public:
                     double dt);
 
     void apply(Species<2, 3>* species);
-    uint8_t cell(int i, int j);
-    uint8_t cell(const core::Vec<2>& pos);
+    uint8_t cell(int i, int j) const;
+    uint8_t cell(const core::Vec<2>& pos) const;
 
 private:
     void add_boundary(const TiledBoundary& boundary, uint8_t id);
