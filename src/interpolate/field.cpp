@@ -43,7 +43,6 @@ void field_at_particles(const spatial::TUniformGrid<T, 2>& field,
     const auto dx = field.dx();
     const auto& f = field.data();
     const auto mdx = 1.0 / dx;
-    const double mat = mdx.x * mdx.y;
 
     for (size_t i = 0; i < n; ++i) {
         const auto xp = x[i] * mdx;
@@ -56,9 +55,8 @@ void field_at_particles(const spatial::TUniformGrid<T, 2>& field,
         const double a3 = (xp.x - xmesh_lower_left.x) * (xp.y - xmesh_lower_left.y);
         const double a4 = (xmesh_upper_right.x - xp.x) * (xp.y - xmesh_lower_left.y);
 
-        out[i] = (a1 * f(idx.x, idx.y) + a2 * f(idx.x + 1, idx.y) + a3 * f(idx.x + 1, idx.y + 1) +
-                  a4 * f(idx.x, idx.y + 1)) *
-                 mat;
+        out[i] = a1 * f(idx.x, idx.y) + a2 * f(idx.x + 1, idx.y) + a3 * f(idx.x + 1, idx.y + 1) +
+                 a4 * f(idx.x, idx.y + 1);
     }
 }
 
