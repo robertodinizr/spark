@@ -38,9 +38,13 @@ public:
         core::Vec<2> dx;
     };
 
+    StructPoissonSolver2D();
     explicit StructPoissonSolver2D(const DomainProp& prop, const std::vector<Region>& regions);
-    void solve(core::Matrix<2>& out, const core::Matrix<2>& rho);
+    StructPoissonSolver2D(StructPoissonSolver2D&& other) noexcept;
+    StructPoissonSolver2D& operator=(StructPoissonSolver2D&& other) noexcept;
     ~StructPoissonSolver2D();
+
+    void solve(core::Matrix<2>& out, const core::Matrix<2>& rho);
 
 private:
     struct Impl;

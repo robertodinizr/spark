@@ -173,20 +173,35 @@ void StructPoissonSolver2D::Impl::assemble() {
     HYPRE_StructMatrixAssemble(hypre_A_);
 }
 void StructPoissonSolver2D::Impl::solve(Matrix<2>& out, const Matrix<2>& rho) {
-    HYPRE_StructVectorSetConstantValues(hypre_x_, 0.0);
-    HYPRE_StructVectorSetConstantValues(hypre_b_, 0.0);
-
-    input_cache_.data().assign(rho.data().begin(), rho.data().end());
-    auto& cache = input_cache_.data();
     constexpr double k = -1.0 / constants::eps0;
-    for (size_t i = 0; i < input_cache_.count(); ++i) {
-        cache[i] *= k;
-    }
 
-    {
-        int ilower[] = {0, 0};
-        int iupper[] = {prop_.extents.x - 1, prop_.extents.y - 1};
-        HYPRE_StructVectorSetBoxValues(hypre_b_, ilower, iupper, cache.data());
+    // TODO(lui): I don't think this is necessary, but need to check
+    // HYPRE_StructVectorSetConstantValues(hypre_x_, 0.0);
+    // HYPRE_StructVectorSetConstantValues(hypre_b_, 0.0);
+
+    // TODO(lui): check which alternative is faster...
+    // Another alternative for setting the vector b:
+    // input_cache_.resize(rho.size());
+    // {
+    //     auto* cache = input_cache_.data_ptr();
+    //     const auto* rho_data = rho.data_ptr();
+    //     const auto n = input_cache_.count();
+    //     for (size_t i = 0; i < n; ++i) {
+    //         cache[i] = k * rho_data[i];
+    //     }
+    // }
+    //
+    // for (int i = 0; i < prop_.extents.x; ++i) {
+    //     int idx1[] = {i, 0};
+    //     int idx2[] = {i, prop_.extents.y - 1};
+    //     HYPRE_StructVectorSetBoxValues(hypre_b_, idx1, idx2, &input_cache_(i, 0));
+    // }
+
+    for (int i = 0; i < rho.size().x; i++) {
+        for (int j = 0; j < rho.size().y; ++j) {
+            int pos[] = {i, j};
+            HYPRE_StructVectorSetValues(hypre_b_, pos, rho(i, j) * k);
+        }
     }
 
     const auto [dx, dy] = prop_.dx;
@@ -241,11 +256,18 @@ StructPoissonSolver2D::Impl::~Impl() {
         HYPRE_StructVectorDestroy(hypre_x_);
 }
 
+StructPoissonSolver2D::StructPoissonSolver2D() : impl_(nullptr) {}
 StructPoissonSolver2D::StructPoissonSolver2D(const StructPoissonSolver2D::DomainProp& prop,
                                              const std::vector<Region>& regions)
     : impl_(std::make_unique<Impl>(prop, regions)) {
     impl_->assemble();
 }
+StructPoissonSolver2D& StructPoissonSolver2D::operator=(StructPoissonSolver2D&& other) noexcept {
+    impl_ = std::move(other.impl_);
+    return *this;
+}
+StructPoissonSolver2D::StructPoissonSolver2D(StructPoissonSolver2D&& other) noexcept
+    : impl_(std::move(other.impl_)) {}
 
 void StructPoissonSolver2D::solve(core::Matrix<2>& out, const core::Matrix<2>& rho) {
     impl_->solve(out, rho);
