@@ -34,6 +34,8 @@ add_library(spark STATIC
         src/particle/tiled_boundary.cpp
 )
 
+set_property(TARGET spark PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+
 if (SPARK_ENABLE_LOG_DEBUG OR SPARK_LOG_ALL)
     list(APPEND SPARK_LOG_DEFS "SPARK_ENABLE_LOG_DEBUG")
 endif ()
