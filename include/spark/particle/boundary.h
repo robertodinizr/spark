@@ -35,7 +35,8 @@ public:
 
 private:
     void add_boundary(const TiledBoundary& boundary, uint8_t id);
-    bool should_check_collision(const core::Vec<2>& a, const core::Vec<2>& b);
+    bool should_check_collision(const core::Vec<2>& a, const core::Vec<2>& b) const;
+    int sx_ = 0, sy_ = 0;
 
     core::TMatrix<uint8_t, 2> cells_;
     spatial::GridProp<2> gprop_;

@@ -1,5 +1,6 @@
 
 #include <cstddef>
+#include <cstdint>
 
 #include "spark/core/vec.h"
 #include "spark/particle/boundary.h"
@@ -13,35 +14,6 @@ namespace {
 #define CMODV(idx, size_vec) CMOD(idx.x, size_vec.x), CMOD(idx.y, size_vec.y)
 
 constexpr size_t padding_ = 4;
-int hx_, hy_, sx_, sy_;
-uint8_t cell_cache_tree_[4];
-
-bool check_grid_hierarchy(const uint8_t* tree,
-                          int max_levels,
-                          int x,
-                          int y,
-                          int block_w,
-                          int block_h) {
-    uint8_t* pos = (uint8_t*)tree;
-    int level = 0;
-    int offset = 1;
-
-    while (level < max_levels) {
-        const int idx = (x > block_w) + (y > block_h) * 2;
-
-        if (!pos[idx])
-            return false;
-
-        offset = 4 * (offset + idx);
-
-        ++level;
-        pos = (uint8_t*)tree + offset;
-        block_w /= 2;
-        block_h /= 2;
-    }
-
-    return true;
-}
 
 int cmod(int idx, int size) {
     return ((size + (idx % size)) % size);
@@ -144,12 +116,6 @@ TiledBoundary2D::TiledBoundary2D(const spatial::GridProp<2>& grid_prop,
 
     sx_ = gprop_.n.x - 1;
     sy_ = gprop_.n.y - 1;
-    hx_ = gprop_.n.x / 2;
-    hy_ = gprop_.n.y / 2;
-    for (int i = 0; i < 4; i++) {
-        cell_cache_tree_[i] = 0;
-    }
-
     for (uint8_t i = 0; i < boundaries_.size(); ++i) {
         // Add circular_mod
         add_boundary(boundaries_[i], i + 1);
@@ -180,28 +146,27 @@ void TiledBoundary2D::add_boundary(const TiledBoundary& b, uint8_t id) {
             int kj = CMOD(j, sz.y);
 
             cells_(ki, kj) = id;
-
-            if (i >= 0 && i < sx_ && j >= 0 && j < sy_) {
-                cell_cache_tree_[(i > hx_) + (j > hy_) * 2] = id;
-            }
         }
 }
 
-bool TiledBoundary2D::should_check_collision(const Vec<2>& a, const Vec<2>& b) {
-    FLOOR_F(current_index_x, a.x)
-    FLOOR_F(current_index_y, a.y)
-    FLOOR_F(end_index_x, b.x)
-    FLOOR_F(end_index_y, b.y)
+bool TiledBoundary2D::should_check_collision(const Vec<2>& a, const Vec<2>& b) const {
+    FLOOR_F(x0, a.x)
+    FLOOR_F(y0, a.y)
+    FLOOR_F(x1, b.x)
+    FLOOR_F(y1, b.y)
 
-    if ((current_index_x >= 0 && current_index_x < sx_ && current_index_y >= 0 &&
-         current_index_y < sy_) &&
-        !cell_cache_tree_[(current_index_x > hx_) + (current_index_x > hy_) * 2] &&
-        (end_index_x >= 0 && end_index_x < sx_ && end_index_y >= 0 && end_index_y < sy_) &&
-        !cell_cache_tree_[(end_index_x > hx_) + (end_index_x > hy_) * 2])
-        return false;
+    if (!(x0 < 0 || x0 >= sx_ || y0 < 0 || y1 >= sy_ || x1 < 0 || x1 >= sx_ || y1 < 0 ||
+          y1 >= sy_)) {
+        // inside the domain.
 
-    if (current_index_x == end_index_x && current_index_y == end_index_y) {
-        return false;
+        if (x0 == x1 && y0 == y1)
+            return false;
+
+        // if (y0 < sy_ / 2 && y1 < sy_ / 2)
+        //     return false;
+
+        // if (x0 > sx_ / 2 && x1 > sx_ / 2)
+        //     return false;
     }
 
     return true;
