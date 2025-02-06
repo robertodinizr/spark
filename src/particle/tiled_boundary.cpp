@@ -6,10 +6,28 @@
 #include "spark/particle/boundary.h"
 #include "spark/spatial/grid.h"
 
+#include <parallel_hashmap/phmap.h>
+
+#include <queue>
+
 using namespace spark::core;
 
-namespace {
+inline std::size_t hash_combine(std::size_t seed, std::size_t other) {
+    return seed ^ (other + 0x9e3779b9 + (seed << 6) + (seed >> 2));
+}
 
+template <>
+struct std::hash<IntVec<2>> {
+    std::size_t operator()(const IntVec<2>& k) const {
+        using std::size_t;
+        using std::hash;
+        const auto h1 = hash<int>()(k.x);
+        return h1 ^ (hash<int>()(k.y) + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+    }
+};
+
+
+namespace {
 #define CMOD(idx, size) ((size + (idx % size)) % size)
 #define CMODV(idx, size_vec) CMOD(idx.x, size_vec.x), CMOD(idx.y, size_vec.y)
 
@@ -19,11 +37,6 @@ int cmod(int idx, int size) {
     return ((size + (idx % size)) % size);
 }
 
-struct CollisionHit {
-    Vec<2> normal;
-    Vec<2> pos;
-    uint8_t val;
-};
 
 #define FLOOR_F(x, fp) \
     int x = int(fp);   \
@@ -34,7 +47,7 @@ struct CollisionHit {
 void grid_raycast(const spark::core::TMatrix<uint8_t, 2>& grid,
                   const Vec<2>& a,
                   const Vec<2>& b,
-                  CollisionHit& hit) {
+                  spark::particle::CollisionHit& hit) {
     hit.val = 0;
     FLOOR_F(current_index_x, a.x)
     FLOOR_F(current_index_y, a.y)
@@ -103,16 +116,15 @@ inline Vec<2> reflect(const Vec<2>& x, const Vec<2>& n, const Vec<2>& contact) {
 inline Vec<3> reflect(const Vec<3>& v, const Vec<2>& n) {
     return {v.x * (1.0 - 2.0 * n.x * n.x), v.y * (1.0 - 2.0 * n.y * n.y), v.z};
 }
-
-}  // namespace
+} // namespace
 
 namespace spark::particle {
-
 TiledBoundary2D::TiledBoundary2D(const spatial::GridProp<2>& grid_prop,
                                  const std::vector<TiledBoundary>& boundaries,
                                  double dt)
     : gprop_(grid_prop), boundaries_(boundaries), dt_(dt) {
     cells_.resize(grid_prop.n + padding_);
+    distance_cells_.resize(grid_prop.n);
 
     sx_ = gprop_.n.x - 1;
     sy_ = gprop_.n.y - 1;
@@ -120,6 +132,8 @@ TiledBoundary2D::TiledBoundary2D(const spatial::GridProp<2>& grid_prop,
         // Add circular_mod
         add_boundary(boundaries_[i], i + 1);
     }
+
+    set_distance_cells();
 }
 
 uint8_t TiledBoundary2D::cell(int i, int j) const {
@@ -149,27 +163,51 @@ void TiledBoundary2D::add_boundary(const TiledBoundary& b, uint8_t id) {
         }
 }
 
-bool TiledBoundary2D::should_check_collision(const Vec<2>& a, const Vec<2>& b) const {
-    FLOOR_F(x0, a.x)
-    FLOOR_F(y0, a.y)
-    FLOOR_F(x1, b.x)
-    FLOOR_F(y1, b.y)
 
-    if (!(x0 < 0 || x0 >= sx_ || y0 < 0 || y1 >= sy_ || x1 < 0 || x1 >= sx_ || y1 < 0 ||
-          y1 >= sy_)) {
-        // inside the domain.
+int TiledBoundary2D::bfs_closest_boundary(int i, int j) {
+    phmap::flat_hash_set<IntVec<2>> visited;
+    std::queue<IntVec<2>> to_visit;
 
-        if (x0 == x1 && y0 == y1)
-            return false;
+    to_visit.push(IntVec<2>{i, j});
+    while (!to_visit.empty()) {
+        auto current = to_visit.front();
+        to_visit.pop();
 
-        // if (y0 < sy_ / 2 && y1 < sy_ / 2)
-        //     return false;
+        if (cell(current.x, current.y)) {
+            return std::abs(current.x - i) + std::abs(current.y - j);
+        }
 
-        // if (x0 > sx_ / 2 && x1 > sx_ / 2)
-        //     return false;
+        if (auto n = IntVec<2>{current.x + 1, current.y}; !visited.contains(n)) {
+            to_visit.push(n);
+            visited.insert(n);
+        }
+        if (auto n = IntVec<2>{current.x - 1, current.y}; !visited.contains(n)) {
+            to_visit.push(n);
+            visited.insert(n);
+        }
+        if (auto n = IntVec<2>{current.x, current.y + 1}; !visited.contains(n)) {
+            to_visit.push(n);
+            visited.insert(n);
+        }
+        if (auto n = IntVec<2>{current.x, current.y - 1}; !visited.contains(n)) {
+            to_visit.push(n);
+            visited.insert(n);
+        }
     }
 
-    return true;
+    return 0;
+}
+
+void TiledBoundary2D::set_distance_cells() {
+    for (int i = 0; i < sx_; i++) {
+        for (int j = 0; j < sy_; j++) {
+            distance_cells_(i, j) = bfs_closest_boundary(i, j);
+        }
+    }
+}
+
+bool TiledBoundary2D::should_collide(const core::IntVec<2>& x0, const core::IntVec<2>& x1) {
+    return std::abs(x0.x - x1.x) + std::abs(x0.y - x1.y) >= distance_cells_(x0.x, x0.y);
 }
 
 void TiledBoundary2D::apply(Species<2, 3>* species) {
@@ -188,7 +226,8 @@ void TiledBoundary2D::apply(Species<2, 3>* species) {
         auto x0_tmp = x0 / gprop_.dx;
         auto x1_tmp = x1 / gprop_.dx;
 
-        if (!should_check_collision(x0_tmp, x1_tmp))
+        if (!should_collide(x0_tmp.apply<std::floor>().to<int>(),
+                            x1_tmp.apply<std::floor>().to<int>()))
             continue;
 
         CollisionHit hit{0};
@@ -204,8 +243,8 @@ void TiledBoundary2D::apply(Species<2, 3>* species) {
             if (btype == BoundaryType::Absorbing) {
                 // TODO(lui): Check if this is OK
                 species->remove(i);
-                i--;  // check ith particle again since the particle is replaced during removal
-                n--;  // decrease the number of particles
+                i--; // check ith particle again since the particle is replaced during removal
+                n--; // decrease the number of particles
                 break;
             } else if (btype == BoundaryType::Specular) {
                 // Specular reflection
@@ -220,5 +259,4 @@ void TiledBoundary2D::apply(Species<2, 3>* species) {
         }
     }
 }
-
-}  // namespace spark::particle
+} // namespace spark::particle
