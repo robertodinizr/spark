@@ -7,39 +7,52 @@
 #include "spark/particle/species.h"
 #include "spark/spatial/grid.h"
 
-namespace spark::particle {
+namespace spark::particle
+{
+    template <unsigned NV>
+    void apply_symmetric_boundary(ChargedSpecies<1, NV>& species, double xmin, double xmax);
 
-template <unsigned NV>
-void apply_symmetric_boundary(ChargedSpecies<1, NV>& species, double xmin, double xmax);
+    template <unsigned NV>
+    void apply_absorbing_boundary(ChargedSpecies<1, NV>& species, double xmin, double xmax);
 
-template <unsigned NV>
-void apply_absorbing_boundary(ChargedSpecies<1, NV>& species, double xmin, double xmax);
+    enum class BoundaryType { Specular, Absorbing };
 
-enum class BoundaryType { Specular, Absorbing };
+    struct TiledBoundary
+    {
+        core::IntVec<2> lower_left, upper_right;
+        BoundaryType boundary_type;
+    };
 
-struct TiledBoundary {
-    core::IntVec<2> lower_left, upper_right;
-    BoundaryType boundary_type;
-};
+    struct CollisionHit
+    {
+        core::Vec<2> normal;
+        core::Vec<2> pos;
+        uint8_t val;
+    };
 
-class TiledBoundary2D {
-public:
-    TiledBoundary2D() = default;
-    TiledBoundary2D(const spatial::GridProp<2>& grid_prop,
-                    const std::vector<TiledBoundary>& boundaries,
-                    double dt);
+    class TiledBoundary2D
+    {
+    public:
+        TiledBoundary2D() = default;
+        TiledBoundary2D(const spatial::GridProp<2>& grid_prop,
+                        const std::vector<TiledBoundary>& boundaries,
+                        double dt);
 
-    void apply(Species<2, 3>* species);
-    uint8_t cell(int i, int j) const;
-    uint8_t cell(const core::Vec<2>& pos) const;
+        void apply(Species<2, 3>* species);
+        uint8_t cell(int i, int j) const;
+        uint8_t cell(const core::Vec<2>& pos) const;
 
-private:
-    void add_boundary(const TiledBoundary& boundary, uint8_t id);
+    private:
+        void add_boundary(const TiledBoundary& boundary, uint8_t id);
+        void set_distance_cells();
+        bool should_collide(const core::IntVec<2>& x0, const core::IntVec<2>& x1);
+        int bfs_closest_boundary(int i, int j);
+        int sx_ = 0, sy_ = 0;
 
-    core::TMatrix<uint8_t, 2> cells_;
-    spatial::GridProp<2> gprop_;
-    std::vector<TiledBoundary> boundaries_;
-    double dt_;
-};
-
-}  // namespace spark::particle
+        core::TMatrix<uint8_t, 2> distance_cells_;
+        core::TMatrix<uint8_t, 2> cells_;
+        spatial::GridProp<2> gprop_;
+        std::vector<TiledBoundary> boundaries_;
+        double dt_;
+    };
+} // namespace spark::particle

@@ -1,13 +1,33 @@
+
 #include <cstddef>
+#include <cstdint>
 
 #include "spark/core/vec.h"
 #include "spark/particle/boundary.h"
 #include "spark/spatial/grid.h"
 
+#include <parallel_hashmap/phmap.h>
+
+#include <queue>
+
 using namespace spark::core;
 
-namespace {
+inline std::size_t hash_combine(std::size_t seed, std::size_t other) {
+    return seed ^ (other + 0x9e3779b9 + (seed << 6) + (seed >> 2));
+}
 
+template <>
+struct std::hash<IntVec<2>> {
+    std::size_t operator()(const IntVec<2>& k) const {
+        using std::size_t;
+        using std::hash;
+        const auto h1 = hash<int>()(k.x);
+        return h1 ^ (hash<int>()(k.y) + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+    }
+};
+
+
+namespace {
 #define CMOD(idx, size) ((size + (idx % size)) % size)
 #define CMODV(idx, size_vec) CMOD(idx.x, size_vec.x), CMOD(idx.y, size_vec.y)
 
@@ -17,67 +37,72 @@ int cmod(int idx, int size) {
     return ((size + (idx % size)) % size);
 }
 
-struct CollisionHit {
-    IntVec<2> loc;
-    Vec<2> normal;
-    Vec<2> pos;
-    uint8_t val;
-};
+
+#define FLOOR_F(x, fp) \
+    int x = int(fp);   \
+    if (x > fp)        \
+        x--;
 
 // Assuming cell size is 1x1
-CollisionHit grid_raycast(const spark::core::TMatrix<uint8_t, 2>& grid,
-                          const Vec<2>& a,
-                          const Vec<2>& b) {
-    auto current_index = a.apply<std::floor>().to<int>();
-    const auto end_index = b.apply<std::floor>().to<int>();
+void grid_raycast(const spark::core::TMatrix<uint8_t, 2>& grid,
+                  const Vec<2>& a,
+                  const Vec<2>& b,
+                  spark::particle::CollisionHit& hit) {
+    hit.val = 0;
+    FLOOR_F(current_index_x, a.x)
+    FLOOR_F(current_index_y, a.y)
+    FLOOR_F(end_index_x, b.x)
+    FLOOR_F(end_index_y, b.y)
+
     const auto sz = grid.size().to<int>();
+    auto dir = (b - a).normalized();
 
-    if (current_index != end_index) {
-        auto dir = (b - a).normalized();
-        Vec<2> t{0.0, 0.0};
+    Vec<2> t{0.0, 0.0};
+    IntVec<2> step = {0, 0};
+    Vec<2> k = {std::abs(1.0 / dir.x), std::abs(1.0 / dir.y)};
 
-        IntVec<2> step = {0, 0};
-        Vec<2> k = {std::abs(1.0 / dir.x), std::abs(1.0 / dir.y)};
-
-        if (dir.x < 0) {
-            step.x = -1;
-            t.x = (a.x - static_cast<double>(current_index.x)) * k.x;
-        } else {
-            step.x = 1;
-            t.x = (static_cast<double>(current_index.x + 1) - a.x) * k.x;
-        }
-
-        if (dir.y < 0) {
-            step.y = -1;
-            t.y = (a.y - static_cast<double>(current_index.y)) * k.y;
-        } else {
-            step.y = 1;
-            t.y = (static_cast<double>(current_index.y + 1) - a.y) * k.y;
-        }
-
-        double distance = 0.0;
-        Vec<2> normal = {0.0, 0.0};
-
-        while (current_index != end_index) {
-            if (t.x < t.y) {
-                current_index.x += step.x;
-                distance = t.x;
-                t.x += k.x;
-                normal = {-(double)step.x, 0};
-            } else {
-                current_index.y += step.y;
-                distance = t.y;
-                t.y += k.y;
-                normal = {0, -(double)step.y};
-            }
-
-            if (uint8_t val = grid(CMODV(current_index, sz)))
-                return {
-                    .loc = current_index, .normal = normal, .pos = a + dir * distance, .val = val};
-        }
+    if (dir.x < 0) {
+        step.x = -1;
+        t.x = (a.x - static_cast<double>(current_index_x)) * k.x;
+    } else {
+        step.x = 1;
+        t.x = (static_cast<double>(current_index_x + 1) - a.x) * k.x;
     }
 
-    return {0};
+    if (dir.y < 0) {
+        step.y = -1;
+        t.y = (a.y - static_cast<double>(current_index_y)) * k.y;
+    } else {
+        step.y = 1;
+        t.y = (static_cast<double>(current_index_y + 1) - a.y) * k.y;
+    }
+
+    double distance = 0.0;
+    Vec<2> normal = {0.0, 0.0};
+
+    while (current_index_x != end_index_x || current_index_y != end_index_y) {
+        if (t.x < t.y) {
+            current_index_x += step.x;
+            distance = t.x;
+            t.x += k.x;
+            normal = {-(double)step.x, 0};
+        } else {
+            current_index_y += step.y;
+            distance = t.y;
+            t.y += k.y;
+            normal = {0, -(double)step.y};
+        }
+
+        const int ki = CMOD(current_index_x, sz.x);
+        const int kj = CMOD(current_index_y, sz.y);
+
+        if (uint8_t val = grid(ki, kj)) {
+            hit.normal = normal;
+            hit.pos = a + dir * distance;
+            hit.val = val;
+            return;
+        }
+    }
 }
 
 inline Vec<2> reflect(const Vec<2>& x, const Vec<2>& n, const Vec<2>& contact) {
@@ -91,20 +116,24 @@ inline Vec<2> reflect(const Vec<2>& x, const Vec<2>& n, const Vec<2>& contact) {
 inline Vec<3> reflect(const Vec<3>& v, const Vec<2>& n) {
     return {v.x * (1.0 - 2.0 * n.x * n.x), v.y * (1.0 - 2.0 * n.y * n.y), v.z};
 }
-
-}  // namespace
+} // namespace
 
 namespace spark::particle {
-
 TiledBoundary2D::TiledBoundary2D(const spatial::GridProp<2>& grid_prop,
                                  const std::vector<TiledBoundary>& boundaries,
                                  double dt)
     : gprop_(grid_prop), boundaries_(boundaries), dt_(dt) {
     cells_.resize(grid_prop.n + padding_);
+    distance_cells_.resize(grid_prop.n);
+
+    sx_ = gprop_.n.x - 1;
+    sy_ = gprop_.n.y - 1;
     for (uint8_t i = 0; i < boundaries_.size(); ++i) {
         // Add circular_mod
         add_boundary(boundaries_[i], i + 1);
     }
+
+    set_distance_cells();
 }
 
 uint8_t TiledBoundary2D::cell(int i, int j) const {
@@ -126,8 +155,59 @@ void TiledBoundary2D::add_boundary(const TiledBoundary& b, uint8_t id) {
     const auto sz = cells_.size().to<int>();
 
     for (int i = imin; i <= imax; ++i)
-        for (int j = jmin; j <= jmax; ++j)
-            cells_(CMOD(i, sz.x), CMOD(j, sz.y)) = id;
+        for (int j = jmin; j <= jmax; ++j) {
+            int ki = CMOD(i, sz.x);
+            int kj = CMOD(j, sz.y);
+
+            cells_(ki, kj) = id;
+        }
+}
+
+
+int TiledBoundary2D::bfs_closest_boundary(int i, int j) {
+    phmap::flat_hash_set<IntVec<2>> visited;
+    std::queue<IntVec<2>> to_visit;
+
+    to_visit.push(IntVec<2>{i, j});
+    while (!to_visit.empty()) {
+        auto current = to_visit.front();
+        to_visit.pop();
+
+        if (cell(current.x, current.y)) {
+            return std::abs(current.x - i) + std::abs(current.y - j);
+        }
+
+        if (auto n = IntVec<2>{current.x + 1, current.y}; !visited.contains(n)) {
+            to_visit.push(n);
+            visited.insert(n);
+        }
+        if (auto n = IntVec<2>{current.x - 1, current.y}; !visited.contains(n)) {
+            to_visit.push(n);
+            visited.insert(n);
+        }
+        if (auto n = IntVec<2>{current.x, current.y + 1}; !visited.contains(n)) {
+            to_visit.push(n);
+            visited.insert(n);
+        }
+        if (auto n = IntVec<2>{current.x, current.y - 1}; !visited.contains(n)) {
+            to_visit.push(n);
+            visited.insert(n);
+        }
+    }
+
+    return 0;
+}
+
+void TiledBoundary2D::set_distance_cells() {
+    for (int i = 0; i < sx_; i++) {
+        for (int j = 0; j < sy_; j++) {
+            distance_cells_(i, j) = bfs_closest_boundary(i, j);
+        }
+    }
+}
+
+bool TiledBoundary2D::should_collide(const core::IntVec<2>& x0, const core::IntVec<2>& x1) {
+    return std::abs(x0.x - x1.x) + std::abs(x0.y - x1.y) >= distance_cells_(x0.x, x0.y);
 }
 
 void TiledBoundary2D::apply(Species<2, 3>* species) {
@@ -146,32 +226,37 @@ void TiledBoundary2D::apply(Species<2, 3>* species) {
         auto x0_tmp = x0 / gprop_.dx;
         auto x1_tmp = x1 / gprop_.dx;
 
+        if (!should_collide(x0_tmp.apply<std::floor>().to<int>(),
+                            x1_tmp.apply<std::floor>().to<int>()))
+            continue;
+
+        CollisionHit hit{0};
+
         while (true) {
-            const auto [loc, normal, coll_pos, val] = grid_raycast(cells_, x0_tmp, x1_tmp);
+            grid_raycast(cells_, x0_tmp, x1_tmp, hit);
 
             // val == 0 means that no boundary was found
-            if (!val)
+            if (!hit.val)
                 break;
 
-            const auto btype = boundaries_[val - 1].boundary_type;
+            const auto btype = boundaries_[hit.val - 1].boundary_type;
             if (btype == BoundaryType::Absorbing) {
                 // TODO(lui): Check if this is OK
                 species->remove(i);
-                i--;  // check ith particle again since the particle is replaced during removal
-                n--;  // decrease the number of particles
+                i--; // check ith particle again since the particle is replaced during removal
+                n--; // decrease the number of particles
                 break;
             } else if (btype == BoundaryType::Specular) {
                 // Specular reflection
-                x1 = reflect(x1, normal, coll_pos * gprop_.dx);
-                v1 = reflect(v1, normal);
+                x1 = reflect(x1, hit.normal, hit.pos * gprop_.dx);
+                v1 = reflect(v1, hit.normal);
 
                 x1_tmp = x1 / gprop_.dx;
-                x0_tmp = coll_pos;
+                x0_tmp = hit.pos;
             }
 
             // TODO(lui): Implement diffuse (Lambertian) reflection
         }
     }
 }
-
-}  // namespace spark::particle
+} // namespace spark::particle
