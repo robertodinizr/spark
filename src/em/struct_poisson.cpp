@@ -1,6 +1,7 @@
 #include <HYPRE_struct_ls.h>
 #include <spark/constants/constants.h>
 
+#include "HYPRE_utilities.h"
 #include "_hypre_utilities.h"
 #include "log/log.h"
 #include "spark/core/matrix.h"
@@ -63,6 +64,7 @@ private:
 
 StructPoissonSolver2D::Impl::Impl(const DomainProp& prop, const std::vector<Region>& boundaries)
     : boundaries_(boundaries), prop_(prop) {
+    HYPRE_Initialize();
     input_cache_.resize(prop.extents.to<size_t>());
 }
 
@@ -95,11 +97,12 @@ void StructPoissonSolver2D::Impl::set_cells() {
     cells_.fill({});
 
     for (const auto& b : boundaries_) {
-        if (b.lower_left.x < 0 || b.lower_left.y < 0 || b.upper_right.x >= prop_.extents.x ||
-            b.upper_right.y >= prop_.extents.y) {
-            SPARK_LOG_ERROR("boundary region [{%d, %d}, {%d, %d}] out of domain!", b.lower_left.x,
-                            b.lower_left.y, b.upper_right.x, b.upper_right.y);
-        }
+        // if (b.lower_left.x < 0 || b.lower_left.y < 0 || b.upper_right.x >= prop_.extents.x ||
+        //     b.upper_right.y >= prop_.extents.y) {
+        //     SPARK_LOG_ERROR("boundary region [{%d, %d}, {%d, %d}] out of domain!",
+        //     b.lower_left.x,
+        //                     b.lower_left.y, b.upper_right.x, b.upper_right.y);
+        // }
 
         cells_.fill({b.region_type, const_cast<Region*>(&b)}, b.lower_left, b.upper_right);
     }
@@ -254,6 +257,7 @@ StructPoissonSolver2D::Impl::~Impl() {
         HYPRE_StructVectorDestroy(hypre_b_);
     if (hypre_x_)
         HYPRE_StructVectorDestroy(hypre_x_);
+    HYPRE_Finalize();
 }
 
 StructPoissonSolver2D::StructPoissonSolver2D() : impl_(nullptr) {}

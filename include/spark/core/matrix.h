@@ -36,7 +36,8 @@ public:
 
         for (G i = imin; i <= imax; ++i)
             for (G j = jmin; j <= jmax; ++j)
-                operator()(i, j) = value;
+                if (i >= 0 && i < size_.x && j >= 0 && j < size_.y)
+                    operator()(i, j) = value;
     }
 
     ENABLE_IF_2(1)
