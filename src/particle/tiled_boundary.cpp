@@ -1,31 +1,27 @@
 
+#include <parallel_hashmap/phmap.h>
+
 #include <cstddef>
 #include <cstdint>
+#include <queue>
 
 #include "spark/core/vec.h"
 #include "spark/particle/boundary.h"
 #include "spark/spatial/grid.h"
 
-#include <parallel_hashmap/phmap.h>
-
-#include <queue>
+#define SPARK_TILED_BOUNDARY_CHECK_IF_INSIDE
 
 using namespace spark::core;
-
-inline std::size_t hash_combine(std::size_t seed, std::size_t other) {
-    return seed ^ (other + 0x9e3779b9 + (seed << 6) + (seed >> 2));
-}
 
 template <>
 struct std::hash<IntVec<2>> {
     std::size_t operator()(const IntVec<2>& k) const {
-        using std::size_t;
         using std::hash;
+        using std::size_t;
         const auto h1 = hash<int>()(k.x);
         return h1 ^ (hash<int>()(k.y) + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
     }
 };
-
 
 namespace {
 #define CMOD(idx, size) ((size + (idx % size)) % size)
@@ -36,7 +32,6 @@ constexpr size_t padding_ = 4;
 int cmod(int idx, int size) {
     return ((size + (idx % size)) % size);
 }
-
 
 #define FLOOR_F(x, fp) \
     int x = int(fp);   \
@@ -116,7 +111,7 @@ inline Vec<2> reflect(const Vec<2>& x, const Vec<2>& n, const Vec<2>& contact) {
 inline Vec<3> reflect(const Vec<3>& v, const Vec<2>& n) {
     return {v.x * (1.0 - 2.0 * n.x * n.x), v.y * (1.0 - 2.0 * n.y * n.y), v.z};
 }
-} // namespace
+}  // namespace
 
 namespace spark::particle {
 TiledBoundary2D::TiledBoundary2D(const spatial::GridProp<2>& grid_prop,
@@ -163,7 +158,6 @@ void TiledBoundary2D::add_boundary(const TiledBoundary& b, uint8_t id) {
         }
 }
 
-
 int TiledBoundary2D::bfs_closest_boundary(int i, int j) {
     phmap::flat_hash_set<IntVec<2>> visited;
     std::queue<IntVec<2>> to_visit;
@@ -206,10 +200,6 @@ void TiledBoundary2D::set_distance_cells() {
     }
 }
 
-bool TiledBoundary2D::should_collide(const core::IntVec<2>& x0, const core::IntVec<2>& x1) {
-    return std::abs(x0.x - x1.x) + std::abs(x0.y - x1.y) >= distance_cells_(x0.x, x0.y);
-}
-
 void TiledBoundary2D::apply(Species<2, 3>* species) {
     if (!species)
         return;
@@ -226,9 +216,23 @@ void TiledBoundary2D::apply(Species<2, 3>* species) {
         auto x0_tmp = x0 / gprop_.dx;
         auto x1_tmp = x1 / gprop_.dx;
 
-        if (!should_collide(x0_tmp.apply<std::floor>().to<int>(),
-                            x1_tmp.apply<std::floor>().to<int>()))
+        const auto x0_cell = x0_tmp.apply<std::floor>().to<int>();
+        const auto x1_cell = x1_tmp.apply<std::floor>().to<int>();
+
+        const uint8_t distance_to_boundary = distance_cells_(x0_cell.x, x0_cell.y);
+        if (std::abs(x0_cell.x - x1_cell.x) + std::abs(x0_cell.y - x1_cell.y) <
+            distance_to_boundary)
             continue;
+
+#ifdef SPARK_TILED_BOUNDARY_CHECK_IF_INSIDE
+        // If particle is inside wall, remove it to avoid errors
+        if (distance_to_boundary == 0) {
+            species->remove(i);
+            i--;
+            n--;
+            continue;
+        }
+#endif
 
         CollisionHit hit{0};
 
@@ -243,8 +247,8 @@ void TiledBoundary2D::apply(Species<2, 3>* species) {
             if (btype == BoundaryType::Absorbing) {
                 // TODO(lui): Check if this is OK
                 species->remove(i);
-                i--; // check ith particle again since the particle is replaced during removal
-                n--; // decrease the number of particles
+                i--;  // check ith particle again since the particle is replaced during removal
+                n--;  // decrease the number of particles
                 break;
             } else if (btype == BoundaryType::Specular) {
                 // Specular reflection
@@ -259,4 +263,4 @@ void TiledBoundary2D::apply(Species<2, 3>* species) {
         }
     }
 }
-} // namespace spark::particle
+}  // namespace spark::particle

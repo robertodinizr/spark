@@ -16,6 +16,7 @@ int stencil_indices[5] = {0, 1, 2, 3, 4};
 int opposite_indices[] = {0, 2, 1, 4, 3};
 int stencil_offsets[5][2] = {{0, 0}, {-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 constexpr double solver_tolerance = 1e-6;
+bool hypre_initialized = false;
 }  // namespace
 
 StructPoissonSolver2D::~StructPoissonSolver2D() = default;
@@ -64,7 +65,10 @@ private:
 
 StructPoissonSolver2D::Impl::Impl(const DomainProp& prop, const std::vector<Region>& boundaries)
     : boundaries_(boundaries), prop_(prop) {
-    HYPRE_Initialize();
+    if (!hypre_initialized) {
+        HYPRE_Initialize();
+        hypre_initialized = true;
+    }
     input_cache_.resize(prop.extents.to<size_t>());
 }
 
@@ -257,7 +261,6 @@ StructPoissonSolver2D::Impl::~Impl() {
         HYPRE_StructVectorDestroy(hypre_b_);
     if (hypre_x_)
         HYPRE_StructVectorDestroy(hypre_x_);
-    HYPRE_Finalize();
 }
 
 StructPoissonSolver2D::StructPoissonSolver2D() : impl_(nullptr) {}
