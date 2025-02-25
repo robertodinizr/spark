@@ -78,6 +78,9 @@ template void interpolate::field_at_particles(const spatial::UniformGrid<1>& fie
 template void interpolate::field_at_particles(const spatial::UniformGrid<2>& field,
                                               const particle::ChargedSpecies<2, 3>& species,
                                               Matrix<1>& out);
+template void interpolate::field_at_particles(const spatial::TUniformGrid<Vec<1>, 1>& field,
+                                              const particle::ChargedSpecies<1, 3>& species,
+                                              TMatrix<Vec<1>, 1>& out);
 template void interpolate::field_at_particles(const spatial::TUniformGrid<Vec<2>, 2>& field,
                                               const particle::ChargedSpecies<2, 3>& species,
                                               TMatrix<Vec<2>, 1>& out);
