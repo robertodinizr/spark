@@ -1,6 +1,5 @@
 #pragma once
 
-#include <functional>
 #include <vector>
 
 #include "spark/core/vec.h"
@@ -24,7 +23,7 @@ public:
         x_.resize(n_current + n);
     }
 
-    void add(size_t n, std::function<void(core::Vec<NV>&, core::Vec<NX>&)> sampler) {
+    void add(size_t n, auto sampler) {
         const auto n_current = x_.size();
 
         v_.resize(n_current + n);
