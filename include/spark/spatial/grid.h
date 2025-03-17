@@ -64,14 +64,14 @@ public:
     AverageGrid() = default;
     AverageGrid(const UniformGrid<N>& grid) : m_average_grid(grid) { m_average_grid.set(0); }
 
-    void add(const UniformGrid<1>& grid) {
-        auto& av = m_average_grid.data();
-        auto& gr = grid.data();
+    void add(const UniformGrid<N>& grid) {
+        auto* av = m_average_grid.data_ptr();
+        const auto* gr = grid.data_ptr();
 
         const auto count = m_average_grid.n_total();
         for (size_t i = 0; i < count; i++) {
-            av(i) = (av(i) * static_cast<double>(m_count) / static_cast<double>(m_count + 1)) +
-                    (gr(i) / static_cast<double>(m_count + 1));
+            av[i] = (av[i] * static_cast<double>(m_count) / static_cast<double>(m_count + 1)) +
+                    (gr[i] / static_cast<double>(m_count + 1));
         }
 
         m_count++;
