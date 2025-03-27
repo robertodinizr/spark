@@ -15,7 +15,7 @@ struct BasicCollisionConfig {
 template <unsigned NX, unsigned NV>
 class BasicCollision : public Reaction<NX, NV> {
 public:
-    BasicCollision(const BasicCollisionConfig& config, CrossSection&& cs)
+    BasicCollision(BasicCollisionConfig config, CrossSection&& cs)
         : Reaction<NX, NV>(std::forward<CrossSection>(cs)), m_config(config) {}
 
 protected:
@@ -23,7 +23,7 @@ protected:
 };
 
 template <unsigned NX, unsigned NV>
-class ElectronElasticCollision final : BasicCollision<NX, NV> {
+class ElectronElasticCollision final : public BasicCollision<NX, NV> {
 public:
     using BasicCollision<NX, NV>::BasicCollision;
 
@@ -42,7 +42,7 @@ public:
 };
 
 template <unsigned NX, unsigned NV>
-class ExcitationCollision final : BasicCollision<NX, NV> {
+class ExcitationCollision final : public BasicCollision<NX, NV> {
 public:
     using BasicCollision<NX, NV>::BasicCollision;
 
@@ -62,7 +62,7 @@ public:
 };
 
 template <unsigned NX, unsigned NV>
-class IonizationCollision final : BasicCollision<NX, NV> {
+class IonizationCollision final : public BasicCollision<NX, NV> {
 public:
     IonizationCollision(particle::ChargedSpecies<NX, NV>& ions,
                         const double t_neutral,
