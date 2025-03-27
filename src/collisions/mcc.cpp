@@ -1,16 +1,15 @@
 #include "spark/collisions/mcc.h"
 
+#include <parallel_hashmap/phmap.h>
+
 #include "spark/constants/constants.h"
 #include "spark/particle/species.h"
 #include "spark/random/random.h"
-
-#include <parallel_hashmap/phmap.h>
 
 using namespace spark::collisions;
 
 namespace {
 auto& sample_from_sequence(const size_t n, const size_t range) {
-
     static phmap::flat_hash_set<size_t> cache;
     cache.clear();
 
@@ -117,7 +116,6 @@ void MCCReactionSet<NX, NV>::react_all() {
     const auto& samples = sample_from_sequence(n_null, m_projectile.n());
 
     for (size_t p_idx : samples) {
-
         auto& pp = m_projectile.x()[p_idx];
         auto& vp = m_projectile.v()[p_idx];
 
