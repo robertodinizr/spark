@@ -19,4 +19,13 @@ constexpr double eps0 = 8.8541878188e-12;
 // Boltzmann constant [J K^-1]
 constexpr double kb = 1.380649e-23;
 
+// Atomic mass constant [kg]
+constexpr double amc = 1.66053906892e-27;
+
+// Helium atomic mass [kg]
+constexpr double m_he = 4.002602 * amc;
+
+// Xenon atomic mass [kg]
+constexpr double m_xe = 131.293 * amc;
+
 }  // namespace spark::constants
