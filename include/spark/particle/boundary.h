@@ -34,7 +34,7 @@ public:
                     const std::vector<TiledBoundary>& boundaries,
                     double dt);
 
-    void apply(Species<2, 3>* species);
+    void apply(Species<2, 3>& species);
     uint8_t cell(int i, int j) const;
     uint8_t cell(const core::Vec<2>& pos) const;
 
@@ -50,4 +50,10 @@ private:
     std::vector<TiledBoundary> boundaries_;
     double dt_;
 };
+
+class BoxBoundary2D {
+public:
+    BoxBoundary2D() = default;
+};
+
 }  // namespace spark::particle

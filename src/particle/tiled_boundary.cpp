@@ -200,13 +200,10 @@ void TiledBoundary2D::set_distance_cells() {
     }
 }
 
-void TiledBoundary2D::apply(Species<2, 3>* species) {
-    if (!species)
-        return;
-
-    int n = species->n();
-    auto* x = species->x();
-    auto* v = species->v();
+void TiledBoundary2D::apply(Species<2, 3>& species) {
+    int n = species.n();
+    auto* x = species.x();
+    auto* v = species.v();
 
     for (int i = 0; i < n; ++i) {
         auto& x1 = x[i];
@@ -227,7 +224,7 @@ void TiledBoundary2D::apply(Species<2, 3>* species) {
 #ifdef SPARK_TILED_BOUNDARY_CHECK_IF_INSIDE
         // If particle is inside wall, remove it to avoid errors
         if (distance_to_boundary == 0) {
-            species->remove(i);
+            species.remove(i);
             i--;
             n--;
             continue;
@@ -246,7 +243,7 @@ void TiledBoundary2D::apply(Species<2, 3>* species) {
             const auto btype = boundaries_[hit.val - 1].boundary_type;
             if (btype == BoundaryType::Absorbing) {
                 // TODO(lui): Check if this is OK
-                species->remove(i);
+                species.remove(i);
                 i--;  // check ith particle again since the particle is replaced during removal
                 n--;  // decrease the number of particles
                 break;
