@@ -18,13 +18,13 @@ enum class BoundaryType { Specular, Absorbing };
 
 struct TiledBoundary {
     core::IntVec<2> lower_left, upper_right;
-    BoundaryType boundary_type;
+    BoundaryType boundary_type = BoundaryType::Absorbing;
 };
 
 struct CollisionHit {
     core::Vec<2> normal;
     core::Vec<2> pos;
-    uint8_t val;
+    uint8_t val = 0;
 };
 
 class TiledBoundary2D {
@@ -32,7 +32,8 @@ public:
     TiledBoundary2D() = default;
     TiledBoundary2D(const spatial::GridProp<2>& grid_prop,
                     const std::vector<TiledBoundary>& boundaries,
-                    double dt);
+                    double dt,
+                    bool empty_box = false);
 
     void apply(Species<2, 3>& species);
     uint8_t cell(int i, int j) const;
@@ -48,12 +49,8 @@ private:
     core::TMatrix<uint8_t, 2> cells_;
     spatial::GridProp<2> gprop_;
     std::vector<TiledBoundary> boundaries_;
-    double dt_;
-};
-
-class BoxBoundary2D {
-public:
-    BoxBoundary2D() = default;
+    double dt_ = 0.0;
+    bool empty_box_ = false;
 };
 
 }  // namespace spark::particle

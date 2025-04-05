@@ -116,8 +116,9 @@ inline Vec<3> reflect(const Vec<3>& v, const Vec<2>& n) {
 namespace spark::particle {
 TiledBoundary2D::TiledBoundary2D(const spatial::GridProp<2>& grid_prop,
                                  const std::vector<TiledBoundary>& boundaries,
-                                 double dt)
-    : gprop_(grid_prop), boundaries_(boundaries), dt_(dt) {
+                                 const double dt,
+                                 const bool empty_box)
+    : gprop_(grid_prop), boundaries_(boundaries), dt_(dt), empty_box_(empty_box) {
     cells_.resize(grid_prop.n + padding_);
     distance_cells_.resize(grid_prop.n);
 
@@ -207,6 +208,10 @@ void TiledBoundary2D::apply(Species<2, 3>& species) {
 
     for (int i = 0; i < n; ++i) {
         auto& x1 = x[i];
+
+        if (empty_box_ && (x1.x > 0 && x1.x < gprop_.l.x && x1.y > 0 && x1.y < gprop_.l.y))
+            continue;
+
         auto& v1 = v[i];
         const auto x0 = core::Vec<2>{x1.x - v1.x * dt_, x1.y - v1.y * dt_};
 
