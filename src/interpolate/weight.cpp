@@ -33,40 +33,51 @@ void weight_to_grid(const spark::particle::ChargedSpecies<1, NV>& species,
 template <unsigned NV>
 void weight_to_grid(const spark::particle::ChargedSpecies<2, NV>& species,
                     spark::spatial::UniformGrid<2>& out) {
-    const size_t n = species.n();
+    const auto n = species.n();
     auto* x = species.x();
 
+    // Cache grid is used to decrease a bit the cache misses due to
+    // access of different matrix rows during the iteration.
+    // TODO(lui): Remove static variable
+    static auto cache_grid = spark::core::TMatrix<std::array<double, 4>, 2>();
+    cache_grid.resize(out.n());
+    cache_grid.fill({0, 0, 0, 0});
     out.set(0.0);
 
-    const double dx = out.dx().x;
-    const double dy = out.dx().y;
+    const auto [mdx, mdy] = 1.0 / out.dx();
+    const auto [nx, ny] = out.n();
+
     auto& grid_data = out.data();
-    const double mdx = 1.0 / dx;
-    const double mdy = 1.0 / dy;
 
-    const auto dims = out.n();
-    const size_t nx = dims.x;
-    const size_t ny = dims.y;
+    for (size_t i = 0; i < n; ++i) {
+        const double xp = x[i].x * mdx;
+        const double yp = x[i].y * mdy;
 
-    for (size_t i = 0; i < n; i++) {
-        const double xp_dx = x[i].x * mdx;
-        const double yp_dy = x[i].y * mdy;
+        const auto jf = floor(xp);
+        const auto kf = floor(yp);
 
-        const size_t j = static_cast<size_t>(floor(xp_dx));
-        const size_t k = static_cast<size_t>(floor(yp_dy));
+        const auto j = static_cast<size_t>(jf);
+        const auto k = static_cast<size_t>(kf);
 
-        const double x_local = xp_dx - static_cast<double>(j);
-        const double y_local = yp_dy - static_cast<double>(k);
+        const double x_local = xp - jf;
+        const double y_local = yp - kf;
 
-        const double w_jk = (1.0 - x_local) * (1.0 - y_local);
-        const double w_j1k = x_local * (1.0 - y_local);
-        const double w_jk1 = (1.0 - x_local) * y_local;
-        const double w_j1k1 = x_local * y_local;
+        auto& c = cache_grid(j, k);
+        c[0] += (1.0 - x_local) * (1.0 - y_local);
+        c[1] += x_local * (1.0 - y_local);
+        c[2] += (1.0 - x_local) * y_local;
+        c[3] += x_local * y_local;
+    }
 
-        grid_data(j, k) += w_jk;
-        grid_data(j + 1, k) += w_j1k;
-        grid_data(j, k + 1) += w_jk1;
-        grid_data(j + 1, k + 1) += w_j1k1;
+    for (int j = 0; j < nx - 1; j++) {
+        for (int k = 0; k < ny - 1; k++) {
+            auto& c = cache_grid(j, k);
+
+            grid_data(j, k) += c[0];
+            grid_data(j + 1, k) += c[1];
+            grid_data(j, k + 1) += c[2];
+            grid_data(j + 1, k + 1) += c[3];
+        }
     }
 
     for (size_t j = 0; j < nx; j++) {
