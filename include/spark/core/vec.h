@@ -79,6 +79,18 @@ struct TVec<T, 3> {
     }
 };
 
+inline Vec<2> cartesianToPolar(const Vec<2>& v) {
+    double R = std::sqrt(v.x * v.x + v.y * v.y);
+    double theta = std::atan2(v.y, v.x);
+    return Vec<2>{R, theta};
+}
+
+inline Vec<2> polarToCartesian(const Vec<2>& v) {
+    double x = v.x * std::cos(v.y);
+    double y = v.x * std::sin(v.y);
+    return Vec<2>{x, y};
+}
+
 template <typename T, unsigned N>
 inline bool operator==(const TVec<T, N>& a, const TVec<T, N>& b) {
     if constexpr (N == 1) {
