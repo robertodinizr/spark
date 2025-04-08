@@ -58,6 +58,48 @@ private:
 template <unsigned N>
 using UniformGrid = TUniformGrid<double, N>;
 
+template <typename T>
+class TCylindricalGrid {
+public:
+    TCylindricalGrid() = default;
+
+    TCylindricalGrid(const core::Vec<2>& l, const core::ULongVec<2>& n) {
+        prop_.l = l;
+        prop_.n = n;
+        prop_.dx = l / (n.template to<double>() - 1.0);
+        data_.resize(n);
+        set({0});
+    }
+
+    TCylindricalGrid(const GridProp<2>& prop) : prop_(prop) {
+        data_.resize(prop_.n);
+        set({0});
+    }
+
+    void set(T v) { data_.fill(v); }
+    auto& data() { return data_; }
+    const auto& data() const { return data_; }
+    auto* data_ptr() const { return const_cast<T*>(data_.data_ptr()); }
+    auto n_total() const { return data_.count(); }
+    auto n() const { return data_.size(); }
+    auto l() const { return prop_.l; }
+    auto d() const { return prop_.dx; }
+    auto prop() const { return prop_; }
+
+    T cellArea(size_t i_r, size_t i_z) const {
+        T dr = prop_.dx.x;
+        T dz = prop_.dx.y;
+        T r_center = (static_cast<T>(i_r) + static_cast<T>(0.5)) * dr;
+        return r_center * dr * dz;
+    }
+
+private:
+    GridProp<2> prop_;
+    core::TMatrix<T, 2> data_;
+};
+
+using CylindricalGrid = TCylindricalGrid<double>;
+
 template <unsigned N>
 class AverageGrid {
 public:
