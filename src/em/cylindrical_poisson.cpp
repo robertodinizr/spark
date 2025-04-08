@@ -19,6 +19,8 @@ namespace {
     bool hypre_initialized = false;
 }
 
+CylindricalPoissonSolver2D::~CylindricalPoissonSolver2D() = default;
+
 struct CylindricalPoissonSolver2D::Impl {
     HYPRE_StructGrid hypre_grid_ = nullptr;
     HYPRE_StructStencil hypre_stencil_ = nullptr;
@@ -39,40 +41,41 @@ struct CylindricalPoissonSolver2D::Impl {
     };
 
     TMatrix<CellProp, 2> cells_;
-    DomainProp prop_;
     std::vector<Region> boundaries_;
 
-    Impl(const DomainProp& prop, const std::vector<Region>& boundaries);
+    DomainProp prop_;
+
     void assemble();
     void solve(Matrix<2>& out, const Matrix<2>& rho);
+
+    Impl(const DomainProp& prop, const std::vector<Region>& boundaries)
+            : prop_(prop), boundaries_(boundaries) {
+            if (!hypre_initialized) {
+                HYPRE_Initialize();
+                hypre_initialized = true;
+            }
+            input_cache_.resize(prop_.extents.to<size_t>());
+        }
     ~Impl();
+
+private:
+    void create_grid();
+    void create_matrices();
+    void create_stencil();
+
+    void set_stencils();
+    void set_cells();
 
     CellType get_cell(int i, int j);
     core::Matrix<2> input_cache_;
     std::vector<BoundaryRef> boundary_refs_;
-
-    Impl(DomainProp& prop, const std::vector<Region>& boundaries)
-        : prop_(prop), boundaries_(boundaries) {
-        if (!hypre_initialized) {
-            HYPRE_Initialize();
-            hypre_initialized = true;
-        }
-        input_cache_.resize(prop_.extents.to<size_t>());
-    }
-
-    void create_grid();
-    void create_matrices();
-    void create_stencil();
-    void set_stencils();
-    void set_cells();
-
+};
     double radial_coefficient_plus(int i, double dr) {
         return (i + 1) / (dr * (i + 0.5));
     }
     double radial_coefficient_minus(int i, double dr) {
         return (i) / (dr * (i + 0.5));
     }
-};
 
 void CylindricalPoissonSolver2D::Impl::create_grid() {
     HYPRE_StructGridCreate(MPI_COMM_WORLD, 2, &hypre_grid_);
@@ -234,9 +237,6 @@ CylindricalPoissonSolver2D::Impl::~Impl() {
         HYPRE_StructVectorDestroy(hypre_x_);
 }
 
-namespace spark {
-namespace em {
-
 CylindricalPoissonSolver2D::CylindricalPoissonSolver2D() : impl_(nullptr) {}
 
 CylindricalPoissonSolver2D::CylindricalPoissonSolver2D(const DomainProp& prop,
@@ -244,7 +244,6 @@ CylindricalPoissonSolver2D::CylindricalPoissonSolver2D(const DomainProp& prop,
     : impl_(std::make_unique<Impl>(prop, regions)) {
     impl_->assemble();
 }
-
 CylindricalPoissonSolver2D::CylindricalPoissonSolver2D(CylindricalPoissonSolver2D&& other) noexcept
     : impl_(std::move(other.impl_)) {}
 
@@ -252,9 +251,6 @@ CylindricalPoissonSolver2D& CylindricalPoissonSolver2D::operator=(CylindricalPoi
     impl_ = std::move(other.impl_);
     return *this;
 }
-
 void CylindricalPoissonSolver2D::solve(core::Matrix<2>& out, const core::Matrix<2>& rho) {
     impl_->solve(out, rho);
 }
-
-}} // namespace spark::em
