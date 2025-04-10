@@ -34,7 +34,7 @@ double collision_frequency(const double neutral_density,
            std::sqrt(2.0 * spark::constants::e * kinetic_energy / mass);
 }
 
-double calc_p_null(double nu_prime, double dt) {
+double calc_p_null(const double nu_prime, const double dt) {
     return 1.0 - std::exp(-nu_prime * dt);
 }
 
@@ -104,8 +104,8 @@ MCCReactionSet<NX, NV>::MCCReactionSet(particle::ChargedSpecies<NX, NV>& project
 
 template <unsigned NX, unsigned NV>
 void MCCReactionSet<NX, NV>::react_all() {
-    double nu_prime = config_.target->dens_max() * max_sigma_v_;
-    double p_null = calc_p_null(nu_prime, config_.dt);
+    const double nu_prime = config_.target->dens_max() * max_sigma_v_;
+    const double p_null = calc_p_null(nu_prime, config_.dt);
 
     const double n_null_f = p_null * static_cast<double>(projectile_.n());
     auto n_null = static_cast<size_t>(std::floor(n_null_f));
