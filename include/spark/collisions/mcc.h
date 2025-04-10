@@ -3,8 +3,8 @@
 #include <unordered_set>
 #include <vector>
 
-#include "spark/particle/species.h"
 #include "reaction.h"
+#include "spark/particle/species.h"
 
 namespace spark::collisions {
 
@@ -12,11 +12,11 @@ enum class RelativeDynamics { SlowProjectile, FastProjectile };
 
 template <unsigned NX, unsigned NV>
 struct ReactionConfig {
-    double m_dt;
-    double m_m_dx;
-    std::unique_ptr<Target<NX, NV>> m_target;
-    Reactions<NX, NV> m_reactions;
-    RelativeDynamics m_dyn;
+    double dt;
+    double mdx;
+    std::unique_ptr<Target<NX, NV>> target;
+    Reactions<NX, NV> reactions;
+    RelativeDynamics dyn;
 };
 
 template <unsigned NX, unsigned NV>
@@ -26,12 +26,12 @@ public:
     void react_all();
 
 private:
-    particle::ChargedSpecies<NX, NV>& m_projectile;
-    ReactionConfig<NX, NV> m_config;
+    particle::ChargedSpecies<NX, NV>& projectile_;
+    ReactionConfig<NX, NV> config_;
 
-    std::vector<size_t> m_particle_samples;
-    std::unordered_set<size_t> m_used_cache;
-    double m_max_sigma_v = 0.0;
+    std::vector<size_t> particle_samples_;
+    std::unordered_set<size_t> used_cache_;
+    double max_sigma_v_ = 0.0;
 };
 
 }  // namespace spark::collisions

@@ -97,31 +97,31 @@ double max_sigmav(const Reactions<NX, NV>& reactions,
 template <unsigned NX, unsigned NV>
 MCCReactionSet<NX, NV>::MCCReactionSet(particle::ChargedSpecies<NX, NV>& projectile,
                                        ReactionConfig<NX, NV>&& config)
-    : m_projectile(projectile), m_config(std::move(config)) {
-    m_max_sigma_v = max_sigmav(m_config.m_reactions, m_projectile,
-                               m_config.m_dyn == RelativeDynamics::SlowProjectile);
+    : projectile_(projectile), config_(std::move(config)) {
+    max_sigma_v_ =
+        max_sigmav(config_.reactions, projectile_, config_.dyn == RelativeDynamics::SlowProjectile);
 }
 
 template <unsigned NX, unsigned NV>
 void MCCReactionSet<NX, NV>::react_all() {
-    double nu_prime = m_config.m_target->dens_max() * m_max_sigma_v;
-    double p_null = calc_p_null(nu_prime, m_config.m_dt);
+    double nu_prime = config_.target->dens_max() * max_sigma_v_;
+    double p_null = calc_p_null(nu_prime, config_.dt);
 
-    const double n_null_f = p_null * static_cast<double>(m_projectile.n());
+    const double n_null_f = p_null * static_cast<double>(projectile_.n());
     auto n_null = static_cast<size_t>(std::floor(n_null_f));
     n_null = n_null_f - static_cast<double>(n_null) > random::uniform() ? n_null + 1 : n_null;
 
     core::Vec<3> v_random;
 
-    const auto& samples = sample_from_sequence(n_null, m_projectile.n());
+    const auto& samples = sample_from_sequence(n_null, projectile_.n());
 
     for (size_t p_idx : samples) {
-        auto& pp = m_projectile.x()[p_idx];
-        auto& vp = m_projectile.v()[p_idx];
+        auto& pp = projectile_.x()[p_idx];
+        auto& vp = projectile_.v()[p_idx];
 
-        if (m_config.m_dyn == RelativeDynamics::SlowProjectile) {
+        if (config_.dyn == RelativeDynamics::SlowProjectile) {
             const double vth =
-                std::sqrt(constants::kb * m_config.m_target->temperature() / m_projectile.m());
+                std::sqrt(constants::kb * config_.target->temperature() / projectile_.m());
 
             v_random = {random::normal() * vth, random::normal() * vth, random::normal() * vth};
 
@@ -130,32 +130,32 @@ void MCCReactionSet<NX, NV>::react_all() {
             vp.z -= v_random.z;
         }
 
-        double kinetic_energy = kinetic_energy_ev(m_projectile, p_idx);
+        double kinetic_energy = kinetic_energy_ev(projectile_, p_idx);
         const double r1 = random::uniform();
 
         double fr0 = 0.0;
         double fr1 = 0.0;
 
-        double dens_n = m_config.m_target->dens_at(pp);
+        double dens_n = config_.target->dens_at(pp);
 
-        for (const auto& reaction : m_config.m_reactions) {
+        for (const auto& reaction : config_.reactions) {
             fr0 = fr1;
             fr1 += collision_frequency(
                        dens_n,
                        interpolate_cross_section(
                            reaction->m_cross_section,
-                           (m_config.m_dyn == RelativeDynamics::SlowProjectile ? 0.5 : 1.0) *
+                           (config_.dyn == RelativeDynamics::SlowProjectile ? 0.5 : 1.0) *
                                kinetic_energy),
-                       kinetic_energy, m_projectile.m()) /
+                       kinetic_energy, projectile_.m()) /
                    nu_prime;
 
             if (r1 > fr0 && r1 <= fr1) {
-                reaction->react(m_projectile, p_idx, kinetic_energy);
+                reaction->react(projectile_, p_idx, kinetic_energy);
                 break;
             }
         }
 
-        if (m_config.m_dyn == RelativeDynamics::SlowProjectile) {
+        if (config_.dyn == RelativeDynamics::SlowProjectile) {
             vp.x += v_random.x;
             vp.y += v_random.y;
             vp.z += v_random.z;
