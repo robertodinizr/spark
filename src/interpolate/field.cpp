@@ -69,8 +69,10 @@ void spark::interpolate::field_at_particles(const spark::spatial::TUniformGrid<T
     ::field_at_particles(field, species, out);
 }
 template <typename T, unsigned NX>
-T interpolate::field_at_position(const spatial::TUniformGrid<T, NX>& field, const Vec<NX>& xp) {
+T interpolate::field_at_position(const spatial::TUniformGrid<T, NX>& field, const Vec<NX>& pos) {
     const auto& f = field.data();
+
+    const auto xp = pos / field.dx();
     const auto xmesh_lower_left = xp.template apply<std::floor>();
     const auto xmesh_upper_right = xmesh_lower_left + 1.0;
     const auto idx = xmesh_lower_left.template to<size_t>();
