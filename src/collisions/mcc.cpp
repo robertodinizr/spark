@@ -115,16 +115,18 @@ void MCCReactionSet<NX, NV>::react_all() {
 
     const auto& samples = sample_from_sequence(n_null, projectile_.n());
 
-    for (size_t p_idx : samples) {
-        auto& pp = projectile_.x()[p_idx];
-        auto& vp = projectile_.v()[p_idx];
+    // TODO(lui): Remove this static variable and use another cache method that avoids global state.
+    static std::vector<size_t> to_be_removed_cache;
+    to_be_removed_cache.resize(0);
 
+    for (size_t p_idx : samples) {
         if (config_.dyn == RelativeDynamics::SlowProjectile) {
             const double vth =
                 std::sqrt(constants::kb * config_.target->temperature() / projectile_.m());
 
             v_random = {random::normal() * vth, random::normal() * vth, random::normal() * vth};
 
+            auto& vp = projectile_.v()[p_idx];
             vp.x -= v_random.x;
             vp.y -= v_random.y;
             vp.z -= v_random.z;
@@ -136,7 +138,7 @@ void MCCReactionSet<NX, NV>::react_all() {
         double fr0 = 0.0;
         double fr1 = 0.0;
 
-        double dens_n = config_.target->dens_at(pp);
+        double dens_n = config_.target->dens_at(projectile_.x()[p_idx]);
 
         for (const auto& reaction : config_.reactions) {
             fr0 = fr1;
@@ -150,16 +152,25 @@ void MCCReactionSet<NX, NV>::react_all() {
                    nu_prime;
 
             if (r1 > fr0 && r1 <= fr1) {
-                reaction->react(projectile_, p_idx, kinetic_energy);
+                const auto outcome = reaction->react(projectile_, p_idx, kinetic_energy);
+                if (static_cast<bool>(outcome & ReactionOutcome::ProjectileToBeRemoved)) {
+                    to_be_removed_cache.push_back(p_idx);
+                }
+
                 break;
             }
         }
 
         if (config_.dyn == RelativeDynamics::SlowProjectile) {
+            auto& vp = projectile_.v()[p_idx];
             vp.x += v_random.x;
             vp.y += v_random.y;
             vp.z += v_random.z;
         }
+    }
+
+    for (const auto& remove_idx : to_be_removed_cache) {
+        projectile_.remove(remove_idx);
     }
 }
 

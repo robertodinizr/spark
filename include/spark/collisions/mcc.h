@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "reaction.h"
+#include "spark/collisions/target.h"
 #include "spark/particle/species.h"
 
 namespace spark::collisions {

@@ -27,9 +27,9 @@ class ElectronElasticCollision final : public BasicCollision<NX, NV> {
 public:
     using BasicCollision<NX, NV>::BasicCollision;
 
-    bool react(particle::ChargedSpecies<NX, NV>& projectile,
-               size_t id,
-               const double kinetic_energy) override {
+    ReactionOutcome react(particle::ChargedSpecies<NX, NV>& projectile,
+                          size_t id,
+                          const double kinetic_energy) override {
         double chi = scattering::random_chi();
 
         scattering::isotropic_coll(
@@ -37,7 +37,7 @@ public:
             scattering::electron_elastic_vmag(kinetic_energy, chi, this->m_config.atomic_mass),
             chi);
 
-        return true;
+        return ReactionOutcome::Collided;
     }
 };
 
@@ -46,18 +46,18 @@ class ExcitationCollision final : public BasicCollision<NX, NV> {
 public:
     using BasicCollision<NX, NV>::BasicCollision;
 
-    bool react(particle::ChargedSpecies<NX, NV>& projectile,
-               size_t id,
-               double kinetic_energy) override {
+    ReactionOutcome react(particle::ChargedSpecies<NX, NV>& projectile,
+                          size_t id,
+                          double kinetic_energy) override {
         if (kinetic_energy < this->m_cross_section.threshold)
-            return false;
+            return ReactionOutcome::NotCollided;
 
         double chi = scattering::random_chi();
         scattering::isotropic_coll(
             projectile, id,
             scattering::electron_excitation_vmag(kinetic_energy, this->m_cross_section.threshold),
             chi);
-        return true;
+        return ReactionOutcome::Collided;
     }
 };
 
@@ -72,11 +72,11 @@ public:
           ions_(ions),
           t_neutral_(t_neutral) {};
 
-    bool react(particle::ChargedSpecies<NX, NV>& projectile,
-               size_t id,
-               double kinetic_energy) override {
+    ReactionOutcome react(particle::ChargedSpecies<NX, NV>& projectile,
+                          size_t id,
+                          double kinetic_energy) override {
         if (kinetic_energy < this->m_cross_section.threshold)
-            return false;
+            return ReactionOutcome::NotCollided;
 
         projectile.add_copy(id);
         size_t p_idx_new = projectile.n() - 1;
@@ -102,7 +102,7 @@ public:
             v = {random::normal(0.0, v_th), random::normal(0.0, v_th), random::normal(0.0, v_th)};
         });
 
-        return true;
+        return ReactionOutcome::Collided;
     }
 
 private:
@@ -115,9 +115,9 @@ class IonElasticCollision final : public BasicCollision<NX, NV> {
 public:
     using BasicCollision<NX, NV>::BasicCollision;
 
-    bool react(particle::ChargedSpecies<NX, NV>& projectile,
-               size_t id,
-               double kinetic_energy) override {
+    ReactionOutcome react(particle::ChargedSpecies<NX, NV>& projectile,
+                          size_t id,
+                          double kinetic_energy) override {
         const double chi = scattering::random_chi2();
         const double cos_chi = std::cos(chi);
         const double v_mag =
@@ -125,7 +125,7 @@ public:
 
         scattering::isotropic_coll(projectile, id, v_mag, chi);
 
-        return true;
+        return ReactionOutcome::Collided;
     }
 };
 
@@ -134,11 +134,11 @@ class ChargeExchangeCollision final : public BasicCollision<NX, NV> {
 public:
     using BasicCollision<NX, NV>::BasicCollision;
 
-    bool react(particle::ChargedSpecies<NX, NV>& projectile,
-               size_t id,
-               double kinetic_energy) override {
+    ReactionOutcome react(particle::ChargedSpecies<NX, NV>& projectile,
+                          size_t id,
+                          double kinetic_energy) override {
         projectile.v()[id] = core::Vec<3>();
-        return true;
+        return ReactionOutcome::Collided;
     }
 };
 
