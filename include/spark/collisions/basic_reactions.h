@@ -64,7 +64,7 @@ public:
 template <unsigned NX, unsigned NV>
 class IonizationCollision final : public BasicCollision<NX, NV> {
 public:
-    IonizationCollision(particle::ChargedSpecies<NX, NV>& ions,
+    IonizationCollision(particle::ChargedSpecies<NX, NV>* ions,
                         const double t_neutral,
                         BasicCollisionConfig config,
                         CrossSection&& cs)
@@ -83,7 +83,7 @@ public:
 
         auto event_pos = projectile.x()[id];
 
-        double ion_mass = ions_.m();
+        double ion_mass = ions_->m();
         double neutral_temperature = t_neutral_;
         double v_mag =
             scattering::electron_ionization_vmag(kinetic_energy, this->m_cross_section.threshold);
@@ -96,7 +96,8 @@ public:
         scattering::isotropic_coll(projectile, p_idx_new, v_mag, chi2);
 
         // Generated ion
-        ions_.add(1, [event_pos, ion_mass, neutral_temperature](core::Vec<3>& v, core::Vec<NX>& x) {
+        ions_->add(1, [event_pos, ion_mass, neutral_temperature](core::Vec<3>& v,
+                                                                 core::Vec<NX>& x) {
             x = event_pos;
             const double v_th = std::sqrt(spark::constants::kb * neutral_temperature / ion_mass);
             v = {random::normal(0.0, v_th), random::normal(0.0, v_th), random::normal(0.0, v_th)};
@@ -106,7 +107,7 @@ public:
     }
 
 private:
-    particle::ChargedSpecies<NX, NV>& ions_;
+    spark::particle::ChargedSpecies<NX, NV>* ions_ = nullptr;
     double t_neutral_ = 0.0;
 };
 

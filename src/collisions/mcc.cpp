@@ -84,22 +84,22 @@ double max_sigmav_for_cross_section(const CrossSection& cs,
 
 template <unsigned NX, unsigned NV>
 double max_sigmav(const Reactions<NX, NV>& reactions,
-                  spark::particle::ChargedSpecies<NX, NV>& projectile,
+                  const double projectile_mass,
                   bool slow_projectiles) {
     double sigmav = 0.0;
     for (const auto& reaction : reactions)
         sigmav = std::max(sigmav, max_sigmav_for_cross_section(reaction->m_cross_section, reactions,
-                                                               projectile.m(), slow_projectiles));
+                                                               projectile_mass, slow_projectiles));
     return sigmav;
 }
 }  // namespace
 
 template <unsigned NX, unsigned NV>
-MCCReactionSet<NX, NV>::MCCReactionSet(particle::ChargedSpecies<NX, NV>& projectile,
+MCCReactionSet<NX, NV>::MCCReactionSet(particle::ChargedSpecies<NX, NV>* projectile,
                                        ReactionConfig<NX, NV>&& config)
     : projectile_(projectile), config_(std::move(config)) {
-    max_sigma_v_ =
-        max_sigmav(config_.reactions, projectile_, config_.dyn == RelativeDynamics::SlowProjectile);
+    max_sigma_v_ = max_sigmav(config_.reactions, projectile_->m(),
+                              config_.dyn == RelativeDynamics::SlowProjectile);
 }
 
 template <unsigned NX, unsigned NV>
@@ -107,13 +107,13 @@ void MCCReactionSet<NX, NV>::react_all() {
     const double nu_prime = config_.target->dens_max() * max_sigma_v_;
     const double p_null = calc_p_null(nu_prime, config_.dt);
 
-    const double n_null_f = p_null * static_cast<double>(projectile_.n());
+    const double n_null_f = p_null * static_cast<double>(projectile_->n());
     auto n_null = static_cast<size_t>(std::floor(n_null_f));
     n_null = n_null_f - static_cast<double>(n_null) > random::uniform() ? n_null + 1 : n_null;
 
     core::Vec<3> v_random;
 
-    const auto& samples = sample_from_sequence(n_null, projectile_.n());
+    const auto& samples = sample_from_sequence(n_null, projectile_->n());
 
     // TODO(lui): Remove this static variable and use another cache method that avoids global state.
     static std::vector<size_t> to_be_removed_cache;
@@ -122,23 +122,23 @@ void MCCReactionSet<NX, NV>::react_all() {
     for (size_t p_idx : samples) {
         if (config_.dyn == RelativeDynamics::SlowProjectile) {
             const double vth =
-                std::sqrt(constants::kb * config_.target->temperature() / projectile_.m());
+                std::sqrt(constants::kb * config_.target->temperature() / projectile_->m());
 
             v_random = {random::normal() * vth, random::normal() * vth, random::normal() * vth};
 
-            auto& vp = projectile_.v()[p_idx];
+            auto& vp = projectile_->v()[p_idx];
             vp.x -= v_random.x;
             vp.y -= v_random.y;
             vp.z -= v_random.z;
         }
 
-        double kinetic_energy = kinetic_energy_ev(projectile_, p_idx);
+        double kinetic_energy = kinetic_energy_ev(*projectile_, p_idx);
         const double r1 = random::uniform();
 
         double fr0 = 0.0;
         double fr1 = 0.0;
 
-        double dens_n = config_.target->dens_at(projectile_.x()[p_idx]);
+        double dens_n = config_.target->dens_at(projectile_->x()[p_idx]);
 
         for (const auto& reaction : config_.reactions) {
             fr0 = fr1;
@@ -148,11 +148,11 @@ void MCCReactionSet<NX, NV>::react_all() {
                            reaction->m_cross_section,
                            (config_.dyn == RelativeDynamics::SlowProjectile ? 0.5 : 1.0) *
                                kinetic_energy),
-                       kinetic_energy, projectile_.m()) /
+                       kinetic_energy, projectile_->m()) /
                    nu_prime;
 
             if (r1 > fr0 && r1 <= fr1) {
-                const auto outcome = reaction->react(projectile_, p_idx, kinetic_energy);
+                const auto outcome = reaction->react(*projectile_, p_idx, kinetic_energy);
                 if (static_cast<bool>(outcome & ReactionOutcome::ProjectileToBeRemoved)) {
                     to_be_removed_cache.push_back(p_idx);
                 }
@@ -162,7 +162,7 @@ void MCCReactionSet<NX, NV>::react_all() {
         }
 
         if (config_.dyn == RelativeDynamics::SlowProjectile) {
-            auto& vp = projectile_.v()[p_idx];
+            auto& vp = projectile_->v()[p_idx];
             vp.x += v_random.x;
             vp.y += v_random.y;
             vp.z += v_random.z;
@@ -170,7 +170,7 @@ void MCCReactionSet<NX, NV>::react_all() {
     }
 
     for (const auto& remove_idx : to_be_removed_cache) {
-        projectile_.remove(remove_idx);
+        projectile_->remove(remove_idx);
     }
 }
 
