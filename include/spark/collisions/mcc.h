@@ -14,7 +14,7 @@ enum class RelativeDynamics { SlowProjectile, FastProjectile };
 template <unsigned NX, unsigned NV>
 struct ReactionConfig {
     double dt;
-    std::unique_ptr<Target<NX, NV>> target;
+    std::shared_ptr<Target<NX, NV>> target;
     Reactions<NX, NV> reactions;
     RelativeDynamics dyn;
 };
