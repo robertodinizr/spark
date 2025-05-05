@@ -38,6 +38,7 @@ public:
     virtual void emit(Species<NX, NV>& species, double n) = 0;
     void emit(Species<NX, NV>& species) { emit(species, rate_); }
     void set_rate(double rate) { rate_ = rate; }
+    double get_rate() { return rate_; }
     virtual ~Emitter() {}
 
 protected:
