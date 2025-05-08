@@ -3,6 +3,8 @@
 #include <spark/interpolate/field.h>
 #include <spark/spatial/grid.h>
 
+#include <algorithm>
+
 #include "spark/core/vec.h"
 
 namespace spark::collisions {
