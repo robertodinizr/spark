@@ -21,7 +21,7 @@ public:
 template <unsigned NX, unsigned NV>
 class StaticUniformTarget : public Target<NX, NV> {
 public:
-    StaticUniformTarget<NX, NV>(double density, double temperature)
+    StaticUniformTarget(double density, double temperature)
         : density_(density), temperature_(temperature) {}
 
     double dens_at(const core::Vec<NX>& pos) override { return density_; }
