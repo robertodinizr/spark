@@ -11,7 +11,7 @@ void field_at_particles(const spatial::TUniformGrid<T, NX>& field,
                         core::TMatrix<T, 1>& out);
 
 template <typename T, unsigned NX>
-T field_at_position(const spatial::TUniformGrid<T, NX>& field, const core::Vec<NX>& pos);     
+T field_at_position(const spatial::TUniformGrid<T, NX>& field, const core::Vec<NX>& pos);
 
 template <typename T, unsigned NV>
 void field_at_particles_cylindrical(const spatial::TUniformGrid<T, 2>& field,
