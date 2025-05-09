@@ -17,5 +17,4 @@ template <typename T, unsigned NV>
 void field_at_particles_cylindrical(const spatial::TUniformGrid<T, 2>& field,
                                     const particle::ChargedSpecies<2, NV>& species,
                                     core::TMatrix<T, 1>& out);
-
-}  // namespace spark::interpolate
+} // namespace spark::interpolate 
