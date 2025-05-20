@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 
 #include "spark/core/matrix.h"
 #include "spark/core/vec.h"
@@ -19,12 +20,7 @@ enum class BoundaryType { Specular, Absorbing };
 struct TiledBoundary {
     core::IntVec<2> lower_left, upper_right;
     BoundaryType boundary_type = BoundaryType::Absorbing;
-};
-
-struct CollisionHit {
-    core::Vec<2> normal;
-    core::Vec<2> pos;
-    uint8_t val = 0;
+    std::function<void(const Species<2, 3>&, size_t)> on_collide = nullptr;
 };
 
 class TiledBoundary2D {
@@ -38,6 +34,9 @@ public:
     void apply(Species<2, 3>& species);
     uint8_t cell(int i, int j) const;
     uint8_t cell(const core::Vec<2>& pos) const;
+
+    const std::vector<TiledBoundary>& boundaries() const { return boundaries_; }
+    void set_boundary_callback(size_t idx, auto&& f) { boundaries_[idx].on_collide = f; }
 
 private:
     void add_boundary(const TiledBoundary& boundary, uint8_t id);
