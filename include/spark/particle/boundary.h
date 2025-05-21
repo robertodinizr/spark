@@ -20,7 +20,6 @@ enum class BoundaryType { Specular, Absorbing };
 struct TiledBoundary {
     core::IntVec<2> lower_left, upper_right;
     BoundaryType boundary_type = BoundaryType::Absorbing;
-    std::function<void(const Species<2, 3>&, size_t)> on_collide = nullptr;
 };
 
 class TiledBoundary2D {
@@ -31,12 +30,15 @@ public:
                     double dt,
                     bool empty_box = false);
 
-    void apply(Species<2, 3>& species);
+    struct Stats {
+        std::vector<size_t> ncolls;
+    };
+
+    void apply(Species<2, 3>& species, Stats* stats = nullptr);
     uint8_t cell(int i, int j) const;
     uint8_t cell(const core::Vec<2>& pos) const;
 
     const std::vector<TiledBoundary>& boundaries() const { return boundaries_; }
-    void set_boundary_callback(size_t idx, auto&& f) { boundaries_[idx].on_collide = f; }
 
 private:
     void add_boundary(const TiledBoundary& boundary, uint8_t id);
