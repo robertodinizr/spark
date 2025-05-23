@@ -208,15 +208,10 @@ void TiledBoundary2D::set_distance_cells() {
     }
 }
 
-void TiledBoundary2D::apply(Species<2, 3>& species, Stats* stats) {
+void TiledBoundary2D::apply(Species<2, 3>& species, const Callback& collision_callback) {
     int n = species.n();
     auto* x = species.x();
     auto* v = species.v();
-
-    if (stats) {
-        stats->ncolls.resize(boundaries_.size());
-        std::fill(stats->ncolls.begin(), stats->ncolls.end(), 0);
-    }
 
     for (int i = 0; i < n; ++i) {
         auto& x1 = x[i];
@@ -260,8 +255,8 @@ void TiledBoundary2D::apply(Species<2, 3>& species, Stats* stats) {
             const auto& b = boundaries_[hit.val - 1];
             const auto btype = b.boundary_type;
 
-            if (stats) {
-                stats->ncolls[hit.val - 1]++;
+            if (collision_callback) {
+                collision_callback(hit.val - 1, x1, v1);
             }
 
             if (btype == BoundaryType::Absorbing) {

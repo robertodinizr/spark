@@ -30,11 +30,11 @@ public:
                     double dt,
                     bool empty_box = false);
 
-    struct Stats {
-        std::vector<size_t> ncolls;
-    };
+    // TODO(lui): remove the dependency on std::function by using templates and lambdas. However
+    // this means that we need to move all the code to the header.
+    using Callback = std::function<void(int, core::Vec<2>, core::Vec<3>)>;
 
-    void apply(Species<2, 3>& species, Stats* stats = nullptr);
+    void apply(Species<2, 3>& species, const Callback& collision_callback = nullptr);
     uint8_t cell(int i, int j) const;
     uint8_t cell(const core::Vec<2>& pos) const;
 
