@@ -72,20 +72,15 @@ target_link_libraries(spark
         HYPRE
 )
 
-if (SPARK_BUILD_TESTS)
+Include(FetchContent)
 
-    # CPMAddPackage("gh:catchorg/Catch2@3.5.0")
-    # list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
+FetchContent_Declare(
+  Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v3.4.0
+)
 
-    # enable_testing()
-    # include(CTest)
-    # include(Catch)
+FetchContent_MakeAvailable(Catch2)
 
-    # add_subdirectory(tests)
-
-    # target_link_libraries(kn_tests PRIVATE
-    #   spark
-    #   Catch2::Catch2WithMain
-    # )
-
-endif ()
+add_executable(tests tests/test_grid.cpp)
+target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
