@@ -72,6 +72,8 @@ target_link_libraries(spark
         HYPRE
 )
 
+enable_testing()
+
 Include(FetchContent)
 
 FetchContent_Declare(
@@ -82,5 +84,11 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
-add_executable(tests tests/test_grid.cpp)
+include(${Catch2_SOURCE_DIR}/extras/Catch.cmake)
+
+add_executable(tests 
+               tests/test_grid.cpp
+               tests/test_vec.cpp)
 target_link_libraries(tests PRIVATE spark::spark Catch2::Catch2WithMain)
+
+catch_discover_tests(tests)

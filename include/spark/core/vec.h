@@ -13,7 +13,7 @@ struct TVec {
 template <typename T>
 struct TVec<T, 1> {
     T x{};
-    T norm() const { return x; }
+    T norm() const { return std::sqrt(x * x); }
     T sum() const { return x; }
     T mul() const { return x; }
     TVec normalized() const { return TVec{x / norm()}; }
