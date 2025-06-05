@@ -88,7 +88,8 @@ include(${Catch2_SOURCE_DIR}/extras/Catch.cmake)
 
 add_executable(tests 
                tests/test_grid.cpp
-               tests/test_vec.cpp)
+               tests/test_vec.cpp
+               tests/test_matrix.cpp)
 target_link_libraries(tests PRIVATE spark::spark Catch2::Catch2WithMain)
 
 catch_discover_tests(tests)
