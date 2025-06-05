@@ -11,7 +11,7 @@ static double square(double x) {
 }
 
 TEST_CASE("TVec<T, 1>") {
-    SECTION("Construção e Inicialização") {
+    SECTION("Construction and initialization") {
         Vec<1> v;
         REQUIRE(v.x == 0.0);
 
@@ -19,7 +19,7 @@ TEST_CASE("TVec<T, 1>") {
         REQUIRE(v_init.x == Catch::Approx(10.5));
     }
 
-    SECTION("Propriedades do Vetor") {
+    SECTION("Vector properties") {
         Vec<1> v{-5.0};
         REQUIRE(v.norm() == Catch::Approx(5.0));
         REQUIRE(v.sum() == Catch::Approx(-5.0));
@@ -29,7 +29,7 @@ TEST_CASE("TVec<T, 1>") {
         REQUIRE(v_norm.x == Catch::Approx(-1.0));
     }
 
-    SECTION("Operadores Aritméticos") {
+    SECTION("Arithmetic operators") {
         Vec<1> a{10.0};
         Vec<1> b{2.0};
 
@@ -43,7 +43,7 @@ TEST_CASE("TVec<T, 1>") {
 
 TEST_CASE("TVec<T, 2>") {
     
-    SECTION("Construção e Inicialização") {
+    SECTION("Construction and initialization") {
         Vec<2> v;
         REQUIRE(v.x == 0.0);
         REQUIRE(v.y == 0.0);
@@ -53,14 +53,14 @@ TEST_CASE("TVec<T, 2>") {
         REQUIRE(v_init.y == Catch::Approx(-4.0));
     }
 
-    SECTION("Propriedades do Vetor") {
+    SECTION("Vector properties") {
         Vec<2> v{3.0, 4.0};
         REQUIRE(v.norm() == Catch::Approx(5.0));
         REQUIRE(v.sum() == Catch::Approx(7.0));
         REQUIRE(v.mul() == Catch::Approx(12.0));
     }
 
-    SECTION("Normalização") {
+    SECTION("Normalization") {
         Vec<2> v{3.0, -4.0};
         Vec<2> v_norm = v.normalized();
         
@@ -74,7 +74,7 @@ TEST_CASE("TVec<T, 2>") {
         REQUIRE(std::isnan(zero_norm.y));
     }
 
-    SECTION("Operadores Aritméticos") {
+    SECTION("Arithmetic Operators") {
         Vec<2> a{10.0, 20.0};
         Vec<2> b{2.0, 5.0};
 
@@ -103,7 +103,7 @@ TEST_CASE("TVec<T, 2>") {
         REQUIRE(scaled.y == Catch::Approx(scaled_rev.y));
     }
 
-    SECTION("Operadores de Comparação") {
+    SECTION("Comparison") {
         Vec<2> a{1.0, 2.0};
         Vec<2> b{1.0, 2.0};
         Vec<2> c{1.0, 3.0};
@@ -112,7 +112,7 @@ TEST_CASE("TVec<T, 2>") {
         REQUIRE(a != c);
     }
 
-    SECTION("Conversão de Tipo com to<>()") {
+    SECTION("Type conversion") {
         Vec<2> v_double{10.7, -3.9};
         IntVec<2> v_int = v_double.to<int>();
 
@@ -120,14 +120,14 @@ TEST_CASE("TVec<T, 2>") {
         REQUIRE(v_int.y == -3);
     }
 
-    SECTION("Conversão para Array com arr()") {
+    SECTION("Array conversion") {
         Vec<2> v{5.5, 6.6};
         auto v_arr = v.arr();
         REQUIRE(v_arr[0] == Catch::Approx(5.5));
         REQUIRE(v_arr[1] == Catch::Approx(6.6));
     }
 
-    SECTION("Aplicação de Função com apply()") {
+    SECTION("Apply method") {
         Vec<2> v{2.0, 3.0};
         Vec<2> v_sq = v.apply<square>();
         REQUIRE(v_sq.x == Catch::Approx(4.0));
@@ -138,7 +138,7 @@ TEST_CASE("TVec<T, 2>") {
 
 TEST_CASE("TVec<T, 3>") {
     
-    SECTION("Construção e Inicialização") {
+    SECTION("Construction and initialization") {
         Vec<3> v;
         REQUIRE(v.x == 0.0);
         REQUIRE(v.y == 0.0);
@@ -150,14 +150,14 @@ TEST_CASE("TVec<T, 3>") {
         REQUIRE(v_init.z == Catch::Approx(-3.0));
     }
 
-    SECTION("Propriedades do Vetor (Norma, Soma, Produto)") {
+    SECTION("Vector properties") {
         Vec<3> v{2.0, 3.0, 4.0};
         REQUIRE(v.norm() == Catch::Approx(std::sqrt(29.0)));
         REQUIRE(v.sum() == Catch::Approx(9.0));
         REQUIRE(v.mul() == Catch::Approx(24.0));
     }
 
-    SECTION("Normalização") {
+    SECTION("Normalization") {
         Vec<3> v{2.0, -3.0, 6.0};
         REQUIRE(v.norm() == Catch::Approx(7.0));
 
@@ -168,7 +168,7 @@ TEST_CASE("TVec<T, 3>") {
         REQUIRE(v_norm.norm() == Catch::Approx(1.0));
     }
 
-    SECTION("Operadores Aritméticos") {
+    SECTION("Arithmetic operators") {
         Vec<3> a{10.0, 20.0, 30.0};
         Vec<3> b{2.0, 4.0, 5.0};
 

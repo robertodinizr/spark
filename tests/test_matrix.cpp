@@ -8,7 +8,7 @@
 using namespace spark::core;
 
 TEST_CASE("TMatrix<T, 1>") {
-    SECTION("Construção e Dimensionamento") {
+    SECTION("Construction and sizing") {
         Matrix<1> m_empty;
         REQUIRE(m_empty.size().x == 0);
         REQUIRE(m_empty.count() == 0);
@@ -22,7 +22,7 @@ TEST_CASE("TMatrix<T, 1>") {
         REQUIRE(m.count() == 20);
     }
 
-    SECTION("Acesso e Manipulação de Dados") {
+    SECTION("Data access") {
         Matrix<1> m({5});
         m.fill(3.14);
 
@@ -40,7 +40,7 @@ TEST_CASE("TMatrix<T, 1>") {
 }
 
 TEST_CASE("TMatrix<T, 2>") {
-    SECTION("Construção e Dimensionamento") {
+    SECTION("Construction and sizing") {
         Matrix<2> m({10, 5});
         REQUIRE(m.size().x == 10);
         REQUIRE(m.size().y == 5);
@@ -52,7 +52,7 @@ TEST_CASE("TMatrix<T, 2>") {
         REQUIRE(m.count() == 200);
     }
 
-    SECTION("Acesso e Manipulação de Dados") {
+    SECTION("Data access") {
         Matrix<2> m({4, 3});
         m.fill(1.0);
 
@@ -64,7 +64,7 @@ TEST_CASE("TMatrix<T, 2>") {
         REQUIRE(m(3, 2) == Catch::Approx(6.6));
     }
 
-    SECTION("Preenchimento") {
+    SECTION("Matrix fill") {
         Matrix<2> m({10, 10});
         m.fill(0.0);
 
@@ -85,7 +85,7 @@ TEST_CASE("TMatrix<T, 2>") {
 }
 
 TEST_CASE("TMatrix<T, 3>") {
-    SECTION("Construção e Dimensionamento") {
+    SECTION("Construction and sizing") {
         Matrix<3> m({10, 5, 2});
         REQUIRE(m.size().x == 10);
         REQUIRE(m.size().y == 5);
@@ -99,7 +99,7 @@ TEST_CASE("TMatrix<T, 3>") {
         REQUIRE(m.count() == 27);
     }
 
-    SECTION("Acesso e Manipulação de Dados") {
+    SECTION("Data access") {
         Matrix<3> m({2, 2, 2});
         m.fill(1.0);
 
