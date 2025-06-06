@@ -92,7 +92,8 @@ add_executable(tests
                tests/test_matrix.cpp
                tests/test_random.cpp
                tests/test_species.cpp
-               tests/test_pusher.cpp)
+               tests/test_pusher.cpp
+               tests/test_poisson.cpp)
 target_link_libraries(tests PRIVATE spark::spark Catch2::Catch2WithMain)
 
 catch_discover_tests(tests)

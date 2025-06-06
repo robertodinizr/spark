@@ -117,11 +117,13 @@ void CylindricalPoissonSolver2D::Impl::set_stencils() {
             
             auto cell = cells_(i, j).cell_type;
 
-            double coeff_center = 0.0;
-            double coeff_left = 0.0;
-            double coeff_right = 0.0;
-            double coeff_down = 0.0;
-            double coeff_up = 0.0;
+            if (cell == CellType::BoundaryDirichlet) {
+                double stencil_dirichlet[] = {1.0};
+                HYPRE_StructMatrixSetValues(hypre_A_, index, 1, stencil_indices, stencil_dirichlet);
+                continue;
+            }
+
+            double coeff_center, coeff_left, coeff_right, coeff_down, coeff_up;
 
             if (j == 0) {
                 coeff_center = -4.0 * idr2 - 2.0 * idz2;
@@ -131,7 +133,6 @@ void CylindricalPoissonSolver2D::Impl::set_stencils() {
                 coeff_up = 4.0 * idr2;
             } else {
                 double rj = static_cast<double>(j) * dr;
-
                 coeff_left = idz2;
                 coeff_right = idz2;
                 coeff_down = idr2 - 0.5 / (rj * dr);
@@ -140,12 +141,6 @@ void CylindricalPoissonSolver2D::Impl::set_stencils() {
             }
 
             double stencil[5] = {coeff_center, coeff_left, coeff_right, coeff_down, coeff_up};
-
-            if (cell == CellType::BoundaryDirichlet) {
-                double stencil_dirichlet[] = {1.0};
-                HYPRE_StructMatrixSetValues(hypre_A_, index, 1, stencil_indices, stencil_dirichlet);
-                continue;
-            }
 
             for (int p = 1; p < 5; ++p) {
                 const int neighbor_pos[] = {i + stencil_offsets[p][0], j + stencil_offsets[p][1]};
@@ -167,7 +162,6 @@ void CylindricalPoissonSolver2D::Impl::set_stencils() {
                                    stencil_offsets[p][0], stencil_offsets[p][1]);
                 }
             }
-
             HYPRE_StructMatrixSetValues(hypre_A_, index, 5, stencil_indices, stencil);
         }
     }
@@ -177,12 +171,12 @@ CellType CylindricalPoissonSolver2D::Impl::get_cell(int i, int j) {
     if (i >= 0 && i < prop_.extents.x && j >= 0 && j < prop_.extents.y) {
         return cells_(i, j).cell_type;
     }
-
     return CellType::External;
 }
 
 void CylindricalPoissonSolver2D::Impl::assemble() {
     create_grid();
+    set_cells();
     create_matrices();
     create_stencil();
     set_stencils();
@@ -191,25 +185,57 @@ void CylindricalPoissonSolver2D::Impl::assemble() {
 
 void CylindricalPoissonSolver2D::Impl::solve(core::Matrix<2>& out, const core::Matrix<2>& rho) {
     constexpr double k = -1.0 / constants::eps0;
+    HYPRE_StructVectorSetConstantValues(hypre_b_, 0.0);
     for (int i = 0; i < rho.size().x; i++) {
         for (int j = 0; j < rho.size().y; ++j) {
             int pos[] = {i, j};
-            HYPRE_StructVectorSetValues(hypre_b_, pos, rho(i, j) * k);
+            if (cells_(i, j).cell_type != CellType::BoundaryDirichlet) {
+                HYPRE_StructVectorSetValues(hypre_b_, pos, rho(i, j) * k);
+            }
         }
     }
 
     for (const auto& region : boundaries_) {
         if (region.region_type == CellType::BoundaryDirichlet && region.input) {
-            core::Matrix<2> cache;
-            cache.resize({static_cast<size_t>(region.upper_right.x - region.lower_left.x + 1),
-                          static_cast<size_t>(region.upper_right.y - region.lower_left.y + 1)});
-            cache.fill(region.input());
+            input_cache_.resize({static_cast<size_t>(region.upper_right.x - region.lower_left.x + 1),
+                                 static_cast<size_t>(region.upper_right.y - region.lower_left.y + 1)});
+            input_cache_.fill(region.input());
             int ilower[] = {region.lower_left.x, region.lower_left.y};
             int iupper[] = {region.upper_right.x, region.upper_right.y};
-            HYPRE_StructVectorSetBoxValues(hypre_b_, ilower, iupper, cache.data_ptr());
+            HYPRE_StructVectorSetBoxValues(hypre_b_, ilower, iupper, input_cache_.data_ptr());
         }
     }
 
+    const auto [dz, dr] = prop_.dx;
+    const double idz2 = 1.0 / (dz * dz);
+    const double idr2 = 1.0 / (dr * dr);
+
+    for (auto [pos, offset, boundary] : boundary_refs_) {
+        int idx[] = {pos.x, pos.y};
+        double coeff = 0.0;
+
+        if (pos.y == 0) {
+            if (offset.y == 0) {
+                coeff = idz2;
+            } else if (offset.y > 0) {
+                coeff = 4.0 * idr2;
+            }
+        } else {
+            double rj = static_cast<double>(pos.y) * dr;
+            if (offset.y == 0) {
+                coeff = idz2;
+            } else {
+                if (offset.y < 0) {
+                    coeff = idr2 - 0.5 / (rj * dr);
+                } else {
+                    coeff = idr2 + 0.5 / (rj * dr);
+                }
+            }
+        }
+        HYPRE_StructVectorAddToValues(hypre_b_, idx, -boundary->input() * coeff);
+    }
+
+    HYPRE_StructVectorSetConstantValues(hypre_x_, 0.0);
     HYPRE_StructSMGCreate(MPI_COMM_WORLD, &hypre_solver_);
     HYPRE_StructSMGSetTol(hypre_solver_, solver_tolerance);
     HYPRE_StructSMGSetup(hypre_solver_, hypre_A_, hypre_b_, hypre_x_);
@@ -225,16 +251,11 @@ void CylindricalPoissonSolver2D::Impl::solve(core::Matrix<2>& out, const core::M
 }
 
 CylindricalPoissonSolver2D::Impl::~Impl() {
-    if (hypre_grid_)
-        HYPRE_StructGridDestroy(hypre_grid_);
-    if (hypre_stencil_)
-        HYPRE_StructStencilDestroy(hypre_stencil_);
-    if (hypre_A_)
-        HYPRE_StructMatrixDestroy(hypre_A_);
-    if (hypre_b_)
-        HYPRE_StructVectorDestroy(hypre_b_);
-    if (hypre_x_)
-        HYPRE_StructVectorDestroy(hypre_x_);
+    if (hypre_grid_) HYPRE_StructGridDestroy(hypre_grid_);
+    if (hypre_stencil_) HYPRE_StructStencilDestroy(hypre_stencil_);
+    if (hypre_A_) HYPRE_StructMatrixDestroy(hypre_A_);
+    if (hypre_b_) HYPRE_StructVectorDestroy(hypre_b_);
+    if (hypre_x_) HYPRE_StructVectorDestroy(hypre_x_);
 }
 
 CylindricalPoissonSolver2D::CylindricalPoissonSolver2D() : impl_(nullptr) {}
