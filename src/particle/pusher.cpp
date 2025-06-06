@@ -45,7 +45,7 @@ void spark::particle::move_particles(spark::particle::ChargedSpecies<2, 3>& spec
 template <unsigned NV>
 void move_particles_cylindrical(
     ChargedSpecies<2, NV>& species,
-    const core::TMatrix<core::Vec<2>, 1>& electric_field_rz_on_particle,
+    const core::TMatrix<core::Vec<2>, 1>& electric_field_rz,
     double dt)
 {
     const size_t n = species.n();
@@ -55,8 +55,8 @@ void move_particles_cylindrical(
     const double qm = species.q() / species.m();
 
     for (size_t i = 0; i < n; i++) {
-        const double Er = electric_field_rz_on_particle[i].x;
-        const double Ez = electric_field_rz_on_particle[i].y;
+        const double Er = electric_field_rz[i].x;
+        const double Ez = electric_field_rz[i].y;
 
         const double vz = v[i].x;
         const double vr = v[i].y;
@@ -68,14 +68,15 @@ void move_particles_cylindrical(
 
         az = qm * Ez;
 
-        if (current_r > 1e-15) {
+        if (current_r > 0.0) {
             ar = qm * Er + v_theta * v_theta / current_r;
             atheta = -vr * v_theta / current_r;
         } else {
             ar = 0.0;
             atheta = 0.0;
 
-            if (std::abs(current_r) < 1e-15) {
+            if (current_r <= 0.0) {
+                x[i].y = 0.0;
                 v[i].y = 0.0;
                 v[i].z = 0.0;
                 }
@@ -88,10 +89,12 @@ void move_particles_cylindrical(
         x[i].x += v[i].x * dt;
         x[i].y += v[i].y * dt;
 
-        if (x[i].y < 0.0) {
-             x[i].y = 0.0;
-             v[i].y = 0.0;
-             v[i].z = 0.0;
+        if (x[i].y <= 0.0) {
+            v[i].y = 0.0;
+            v[i].z = 0.0;
+
+            x[i].x = 0.0;
+            x[i].y = 0.0;
         }
     }
 }

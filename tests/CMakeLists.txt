@@ -3,7 +3,8 @@ add_executable(spark_tests STATIC
                test_vec.cpp
                test_matrix.cpp
                test_random.cpp
-               test_species.cpp)
+               test_species.cpp
+               test_pusher.cpp)
 
 target_include_directories(spark_tests PRIVATE
     ${Catch2_SOURCE_DIR}/src
