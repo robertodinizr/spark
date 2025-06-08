@@ -8,7 +8,8 @@ add_executable(spark_tests STATIC
                em/test_poisson.cpp
                interpolate/test_weight.cpp
                interpolate/test_field.cpp
-               em/test_electric_field.cpp)
+               em/test_electric_field.cpp
+               particle/test_boundary.cpp)
 
 target_include_directories(spark_tests PRIVATE
     ${Catch2_SOURCE_DIR}/src
