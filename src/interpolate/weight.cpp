@@ -109,6 +109,8 @@ void weight_to_grid_cylindrical(const spark::particle::ChargedSpecies<2, NV>& sp
     auto& grid_data = out.data();
 
     for (size_t i = 0; i < n; ++i) {
+        if (x[i].y < 0) continue;
+
         const double zp = x[i].x * mdz;
         const double r = x[i].y;
         const double rp = r * mdr;
@@ -123,8 +125,11 @@ void weight_to_grid_cylindrical(const spark::particle::ChargedSpecies<2, NV>& sp
         const double r_local = rp - kf;
         const double rj = k * dr;
 
-        const double f1 = (rj + 0.5 * r_local * dr) / (rj + 0.5 * dr);
-        const double f2 = (rj + 0.5 * (r_local + 1.0) * dr) / (rj + 0.5 * dr);
+        const double denominator = rj + 0.5 * dr;
+        if (denominator <= 0) continue;
+
+        const double f1 = (rj + 0.5 * r_local * dr) / (denominator);
+        const double f2 = (rj + 0.5 * (r_local + 1.0) * dr) / (denominator);
 
         auto& c = cache_grid(j, k);
         c[0] += (1.0 - z_local) * (1.0 - r_local) * f2;
@@ -152,18 +157,18 @@ void spark::interpolate::weight_to_grid(const spark::particle::ChargedSpecies<NX
     spark::interpolate::weight_to_grid(species, out);
 }
 
-template void spark::interpolate::weight_to_grid(
+template void spark::interpolate::weight_to_grid<1>(
     const spark::particle::ChargedSpecies<1, 1>& species,
     spark::spatial::UniformGrid<1>& out);
-template void spark::interpolate::weight_to_grid(
+template void spark::interpolate::weight_to_grid<3>(
     const spark::particle::ChargedSpecies<1, 3>& species,
     spark::spatial::UniformGrid<1>& out);
-template void spark::interpolate::weight_to_grid(
+template void spark::interpolate::weight_to_grid<1>(
     const spark::particle::ChargedSpecies<2, 1>& species,
     spark::spatial::UniformGrid<2>& out);
-template void spark::interpolate::weight_to_grid(
+template void spark::interpolate::weight_to_grid<3>(
     const spark::particle::ChargedSpecies<2, 3>& species,
     spark::spatial::UniformGrid<2>& out);
-template void spark::interpolate::weight_to_grid_cylindrical(
+template void spark::interpolate::weight_to_grid_cylindrical<3>(
     const spark::particle::ChargedSpecies<2, 3>& species,
     spark::spatial::UniformGrid<2>& out);

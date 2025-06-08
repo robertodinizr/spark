@@ -5,7 +5,8 @@ add_executable(spark_tests STATIC
                random/test_random.cpp
                particle/test_species.cpp
                particle/test_pusher.cpp
-               em/test_poisson.cpp)
+               em/test_poisson.cpp
+               interpolate/test_weight.cpp)
 
 target_include_directories(spark_tests PRIVATE
     ${Catch2_SOURCE_DIR}/src
