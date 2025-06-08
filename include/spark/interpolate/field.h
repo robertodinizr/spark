@@ -5,9 +5,14 @@
 
 namespace spark::interpolate {
 
-template <typename T, unsigned NX, unsigned NV>
-void field_at_particles(const spatial::TUniformGrid<T, NX>& field,
-                        const particle::ChargedSpecies<NX, NV>& species,
+template <typename T, unsigned NV>
+void field_at_particles(const spatial::TUniformGrid<T, 1>& field,
+                        const particle::ChargedSpecies<1, NV>& species,
+                        core::TMatrix<T, 1>& out);
+
+template <typename T, unsigned NV>
+void field_at_particles(const spatial::TUniformGrid<T, 2>& field,
+                        const particle::ChargedSpecies<2, NV>& species,
                         core::TMatrix<T, 1>& out);
 
 template <typename T, unsigned NX>

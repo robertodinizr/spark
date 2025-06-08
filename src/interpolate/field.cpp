@@ -88,16 +88,18 @@ void field_at_particles_cylindrical(const spatial::TUniformGrid<T, 2>& field,
     const int nz = grid_dims.x;
     const int nr = grid_dims.y;
 
-    const double z_grid_start = field.l().x;
-    const double r_grid_start = field.l().y;
-
-
     for (size_t i = 0; i < n; ++i) {
+
+        if (x[i].y < 0.0) {
+            out[i] = T{};
+            continue;
+        }
+
         const double zp = x[i].x;
         const double rp = x[i].y;
 
-        const double zp_norm = (zp - z_grid_start) * mdz;
-        const double rp_norm = (rp - r_grid_start) * mdr;
+        const double zp_norm = zp * mdz;
+        const double rp_norm = rp * mdr;
 
         const double jf = floor(zp_norm);
         const double kf = floor(rp_norm);

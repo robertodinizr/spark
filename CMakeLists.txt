@@ -94,7 +94,8 @@ add_executable(tests
                tests/particle/test_species.cpp
                tests/particle/test_pusher.cpp
                tests/em/test_poisson.cpp
-               tests/interpolate/test_weight.cpp)
+               tests/interpolate/test_weight.cpp
+               tests/interpolate/test_field.cpp)
 target_link_libraries(tests PRIVATE spark::spark Catch2::Catch2WithMain)
 
 catch_discover_tests(tests)
