@@ -93,11 +93,15 @@ add_executable(tests
                tests/random/test_random.cpp
                tests/particle/test_species.cpp
                tests/particle/test_pusher.cpp
+               tests/particle/test_boundary.cpp
                tests/em/test_poisson.cpp
+               tests/em/test_electric_field.cpp
                tests/interpolate/test_weight.cpp
                tests/interpolate/test_field.cpp
-               tests/em/test_electric_field.cpp
-               tests/particle/test_boundary.cpp)
+               tests/collisions/test_target.cpp
+               tests/collisions/test_scattering.cpp
+               tests/collisions/test_reactions.cpp
+               tests/collisions/test_mcc.cpp)
 target_link_libraries(tests PRIVATE spark::spark Catch2::Catch2WithMain)
 
 catch_discover_tests(tests)
