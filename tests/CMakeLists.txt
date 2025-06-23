@@ -6,6 +6,7 @@ add_executable(spark_tests STATIC
                particle/test_species.cpp
                particle/test_pusher.cpp
                particle/test_boundary.cpp
+               particle/test_emitter.cpp
                em/test_poisson.cpp
                em/test_electric_field.cpp
                interpolate/test_weight.cpp

@@ -94,6 +94,7 @@ add_executable(tests
                tests/particle/test_species.cpp
                tests/particle/test_pusher.cpp
                tests/particle/test_boundary.cpp
+               tests/particle/test_emitter.cpp
                tests/em/test_poisson.cpp
                tests/em/test_electric_field.cpp
                tests/interpolate/test_weight.cpp

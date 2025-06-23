@@ -69,9 +69,9 @@ public:
             if constexpr (NV > 0)
                 v.x = std::get<NX + 0>(distributions_)();
             if constexpr (NV > 1)
-                v.x = std::get<NX + 1>(distributions_)();
+                v.y = std::get<NX + 1>(distributions_)();
             if constexpr (NV > 2)
-                v.x = std::get<NX + 2>(distributions_)();
+                v.z = std::get<NX + 2>(distributions_)();
         });
     }
 
