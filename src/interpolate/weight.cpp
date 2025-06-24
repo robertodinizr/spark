@@ -138,8 +138,8 @@ void weight_to_grid_cylindrical(const spark::particle::ChargedSpecies<2, NV>& sp
         c[3] += z_local * r_local * f1;
     }
 
-    for (size_t j = 0; j < nz; j++) {
-        for (size_t k = 0; k < nr; k++) {
+    for (size_t j = 0; j < nz- 1; j++) {
+        for (size_t k = 0; k < nr - 1; k++) {
             auto& c = cache_grid(j, k);
 
             grid_data(j, k) += c[0];

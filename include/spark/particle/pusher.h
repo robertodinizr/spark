@@ -21,5 +21,4 @@ void boris_mover_cylindrical(ChargedSpecies<2, 3>& species,
                     const core::TMatrix<core::Vec<3>, 1>& electric_field,
                     const core::TMatrix<core::Vec<3>, 1>& magnetic_field,
                     double dt);
-
 } // namespace spark::particle

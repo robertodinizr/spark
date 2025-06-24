@@ -73,39 +73,43 @@ void electric_field_cylindrical(const spatial::UniformGrid<2>& phi, core::TMatri
 
     for (int i = 0; i < nz; ++i) {
         for (int j = 0; j < nr; ++j) {
+            double Ez, Er;
+
             if (i > 0 && i < nz - 1) {
-                out(i, j).y = -(phi_mat(i + 1, j) - phi_mat(i - 1, j)) / (2.0 * dz);
+                Ez = -(phi_mat(i + 1, j) - phi_mat(i - 1, j)) / (2.0 * dz);
             } else if (i == 0) {
                 if (nz >= 3) {
-                     out(i, j).y = -(-3.0 * phi_mat(i, j) + 4.0 * phi_mat(i + 1, j) - phi_mat(i + 2, j)) / (2.0 * dz);
+                     Ez = -(-3.0 * phi_mat(i, j) + 4.0 * phi_mat(i + 1, j) - phi_mat(i + 2, j)) / (2.0 * dz);
                 } else if (nz == 2) {
-                     out(i, j).y = -(phi_mat(i + 1, j) - phi_mat(i, j)) / dz;
+                     Ez = -(phi_mat(i + 1, j) - phi_mat(i, j)) / dz;
                 } else {
-                     out(i, j).y = 0.0;
+                     Ez = 0.0;
                 }
-            } else if (i == nz - 1) {
+            } else {
                  if (nz >= 3) {
-                     out(i, j).y = -(phi_mat(i - 2, j) - 4.0 * phi_mat(i - 1, j) + 3.0 * phi_mat(i, j)) / (2.0 * dz);
+                     Ez = -(phi_mat(i - 2, j) - 4.0 * phi_mat(i - 1, j) + 3.0 * phi_mat(i, j)) / (2.0 * dz);
                  } else if (nz == 2) {
-                     out(i, j).y = -(phi_mat(i, j) - phi_mat(i - 1, j)) / dz;
+                     Ez = -(phi_mat(i, j) - phi_mat(i - 1, j)) / dz;
                  } else {
-                      out(i, j).y = 0.0;
+                      Ez = 0.0;
                  }
             }
 
             if (j > 0 && j < nr - 1) {
-                out(i, j).x = -(phi_mat(i, j + 1) - phi_mat(i, j - 1)) / (2.0 * dr);
+                Er = -(phi_mat(i, j + 1) - phi_mat(i, j - 1)) / (2.0 * dr);
             } else if (j == 0) {
-                out(i, j).x = 0.0;
-            } else if (j == nr - 1) {
+                Er = 0.0;
+            } else {
                  if (nr >= 3) {
-                     out(i, j).x = -(phi_mat(i, j - 2) - 4.0 * phi_mat(i, j - 1) + 3.0 * phi_mat(i, j)) / (2.0 * dr);
+                     Er = -(phi_mat(i, j - 2) - 4.0 * phi_mat(i, j - 1) + 3.0 * phi_mat(i, j)) / (2.0 * dr);
                  } else if (nr == 2) {
-                      out(i, j).x = -(phi_mat(i, j) - phi_mat(i, j - 1)) / dr;
+                      Er = -(phi_mat(i, j) - phi_mat(i, j - 1)) / dr;
                  } else {
-                     out(i, j).x = 0.0;
+                     Er = 0.0;
                  }
             }
+
+            out(i, j) = {Ez, Er};
         }
     }
 }

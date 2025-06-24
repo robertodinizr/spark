@@ -90,11 +90,6 @@ void field_at_particles_cylindrical(const spatial::TUniformGrid<T, 2>& field,
 
     for (size_t i = 0; i < n; ++i) {
 
-        if (x[i].y < 0.0) {
-            out[i] = T{};
-            continue;
-        }
-
         const double zp = x[i].x;
         const double rp = x[i].y;
 

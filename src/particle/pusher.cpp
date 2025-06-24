@@ -43,16 +43,6 @@ void spark::particle::move_particles(spark::particle::ChargedSpecies<2, 3>& spec
     }
 }
 
-template <unsigned NX>
-core::Vec<3> boris_velocity(spark::particle::ChargedSpecies<NX, 3>& species,
-                                     const core::TMatrix<core::Vec<3>, 1>& electric_field,
-                                     const core::TMatrix<core::Vec<3>, 1>& magnetic_field,
-                                     const double dt)
-{
-const double k = species.q() * dt / (2.0 * species.m());
-
-}
-
 template<unsigned NX>
 void spark::particle::boris_mover(spark::particle::ChargedSpecies<NX, 3>& species,
                                      const core::TMatrix<core::Vec<3>, 1>& electric_field,
@@ -88,57 +78,55 @@ void spark::particle::boris_mover(spark::particle::ChargedSpecies<NX, 3>& specie
 }
 
 void boris_mover_cylindrical(spark::particle::ChargedSpecies<2, 3>& species,
-                                     const core::TMatrix<core::Vec<3>, 1>& electric_field,
-                                     const core::TMatrix<core::Vec<3>, 1>& magnetic_field,
-                                     const double dt) {
+                             const core::TMatrix<core::Vec<3>, 1>& electric_field,
+                             const core::TMatrix<core::Vec<3>, 1>& magnetic_field,
+                             const double dt) {
     const size_t n = species.n();
     auto* v = species.v();
     auto* x = species.x();
     const auto* E = electric_field.data_ptr();
     const auto* B = magnetic_field.data_ptr();
     const double k = species.q() * dt / (2.0 * species.m());
-    
+    const double lr = 0.067;
+    const double lz = 0.00157;
+
     for (size_t i = 0; i < n; ++i) {
+
+        const double old_z = x[i].x;
+        const double old_r = x[i].y;
+        // Half step update
         core::Vec<3> v_minus = v[i] + E[i] * k;
-        core::Vec<3> v_plus;
+        core::Vec<3> v_plus = v_minus;
 
         if (B[i].norm() > 0.0) {
             const double f = std::tan(k * B[i].norm()) / B[i].norm();
             core::Vec<3> v_prime = v_minus + cross(v_minus, B[i]) * f;
             v_plus = v_minus + cross(v_prime, B[i]) * (2.0 * f / (1.0 + f * f * B[i].norm() * B[i].norm()));
-        } else {
-            v_plus = v_minus;
         }
+
         core::Vec<3> v_star = v_plus + E[i] * k;
+        const double vz_star = v_star.x;
+        const double vr_star = v_star.y;
+        const double vtheta_star = v_star.z;
 
-        const double r = x[i].y;
-        const double vr = v_star.y;
-        const double vtheta = v_star.z;
+        const double r_old = x[i].y;
+        const double r_new = r_old + vr_star * dt;
 
-        const double x_new = r + vr * dt;
-        const double y_new = vtheta * dt;
+        const double theta_new = (r_old > 0) ? std::atan2(vtheta_star * dt, r_old) : 0.0;
 
-        const double r_n = std::sqrt(x_new * x_new + y_new * y_new);
+        x[i].x += vz_star * dt;
+        x[i].y = r_new;
 
-        double cos_alpha = 1.0;
-        double sin_alpha = 0.0;
-
-        if (r_n > 0.0) {
-            cos_alpha = x_new / r_n;
-            sin_alpha = y_new / r_n;
+        if (r_new > 1e-12) {
+            const double r_ratio = r_old / r_new;
+            v[i].y = vr_star * std::cos(theta_new) - vtheta_star * std::sin(theta_new);
+            v[i].z = (vr_star * std::sin(theta_new) + vtheta_star * std::cos(theta_new)) * r_ratio;
+        } else {
+            v[i].y = vr_star;
+            v[i].z = 0.0;
         }
-
-        const double vr_final = vr * cos_alpha + vtheta * sin_alpha;
-        const double vtheta_final = -vr * sin_alpha + vtheta * cos_alpha;
-
-        const double vz_final = v_star.x;
-
-        v[i] = {vz_final, vr_final, vtheta_final};
-
-        x[i].x += vz_final * dt;
-        x[i].y = r_n;  
+        v[i].x = vz_star;
     }
-
 }
 
 template void boris_mover(ChargedSpecies<1, 3>&, const core::TMatrix<core::Vec<3>, 1>&, const core::TMatrix<core::Vec<3>, 1>&, double);
