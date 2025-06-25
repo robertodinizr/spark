@@ -16,7 +16,7 @@ template <unsigned NX, unsigned NV>
 struct ReactionConfig {
     double dt;
     std::shared_ptr<Target<NX, NV>> target;
-    Reactions<NX, NV> reactions;
+    std::shared_ptr<Reactions<NX, NV>> reactions;
     RelativeDynamics dyn;
 };
 
