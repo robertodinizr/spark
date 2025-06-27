@@ -87,8 +87,6 @@ void boris_mover_cylindrical(spark::particle::ChargedSpecies<2, 3>& species,
     const auto* E = electric_field.data_ptr();
     const auto* B = magnetic_field.data_ptr();
     const double k = species.q() * dt / (2.0 * species.m());
-    const double lr = 0.067;
-    const double lz = 0.00157;
 
     for (size_t i = 0; i < n; ++i) {
 
@@ -97,35 +95,40 @@ void boris_mover_cylindrical(spark::particle::ChargedSpecies<2, 3>& species,
         // Half step update
         core::Vec<3> v_minus = v[i] + E[i] * k;
         core::Vec<3> v_plus = v_minus;
-
+        // Full magnetic rotation
         if (B[i].norm() > 0.0) {
             const double f = std::tan(k * B[i].norm()) / B[i].norm();
             core::Vec<3> v_prime = v_minus + cross(v_minus, B[i]) * f;
             v_plus = v_minus + cross(v_prime, B[i]) * (2.0 * f / (1.0 + f * f * B[i].norm() * B[i].norm()));
         }
-
+        // Second half acceleration
         core::Vec<3> v_star = v_plus + E[i] * k;
         const double vz_star = v_star.x;
         const double vr_star = v_star.y;
         const double vtheta_star = v_star.z;
 
-        const double r_old = x[i].y;
-        const double r_new = r_old + vr_star * dt;
+        // radial displacement
+	const double dr = vr_star * dt;
+        const double dtheta_linear = vtheta_star * dt;
+	const double r_new = std::sqrt((old_r + dr) * (old_r + dr) + dtheta_linear * dtheta_linear);
 
-        const double theta_new = (r_old > 0) ? std::atan2(vtheta_star * dt, r_old) : 0.0;
-
-        x[i].x += vz_star * dt;
+	// update particle position
+	x[i].x += vz_star * dt;
         x[i].y = r_new;
 
+	// rotation
+	        double ca, sa;
         if (r_new > 1e-12) {
-            const double r_ratio = r_old / r_new;
-            v[i].y = vr_star * std::cos(theta_new) - vtheta_star * std::sin(theta_new);
-            v[i].z = (vr_star * std::sin(theta_new) + vtheta_star * std::cos(theta_new)) * r_ratio;
+            ca = (old_r + dr) / r_new;
+            sa = dtheta_linear / r_new;
         } else {
-            v[i].y = vr_star;
-            v[i].z = 0.0;
+            ca = (vr_star >= 0) ? 1.0 : -1.0;
+            sa = 0.0;
         }
+
         v[i].x = vz_star;
+        v[i].y = ca * vr_star + sa * vtheta_star;
+        v[i].z = -sa * vr_star + ca * vtheta_star;
     }
 }
 
