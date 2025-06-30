@@ -126,7 +126,7 @@ void CylindricalPoissonSolver2D::Impl::set_stencils() {
             double coeff_center, coeff_left, coeff_right, coeff_down, coeff_up;
 
             if (j == 0) {
-                coeff_center = -2.0 * idr2 - 2.0 * idz2;
+                coeff_center = -(2.0 * idz2 + 4.0 * idr2);
                 coeff_left = idz2;
                 coeff_right = idz2;
                 coeff_down = 0.0;

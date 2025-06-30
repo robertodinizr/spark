@@ -73,44 +73,37 @@ void electric_field_cylindrical(const spatial::UniformGrid<2>& phi, core::TMatri
 
     for (int i = 0; i < nz; ++i) {
         for (int j = 0; j < nr; ++j) {
-            double Ez, Er;
+            const int i1 = clamp(0, nz - 1, i + 1);
+            const int i0 = clamp(0, nz - 1, i - 1);
+            const int j1 = clamp(0, nr - 1, j + 1);
+            const int j0 = clamp(0, nr - 1, j - 1);
 
             if (i > 0 && i < nz - 1) {
-                Ez = -(phi_mat(i + 1, j) - phi_mat(i - 1, j)) / (2.0 * dz);
-            } else if (i == 0) {
-                if (nz >= 3) {
-                     Ez = -(-3.0 * phi_mat(i, j) + 4.0 * phi_mat(i + 1, j) - phi_mat(i + 2, j)) / (2.0 * dz);
-                } else if (nz == 2) {
-                     Ez = -(phi_mat(i + 1, j) - phi_mat(i, j)) / dz;
-                } else {
-                     Ez = 0.0;
-                }
+                out(i, j).y = -(phi_mat(i1, j) - phi_mat(i0, j)) / static_cast<double>(i1 - i0) * dz;
             } else {
-                 if (nz >= 3) {
-                     Ez = -(phi_mat(i - 2, j) - 4.0 * phi_mat(i - 1, j) + 3.0 * phi_mat(i, j)) / (2.0 * dz);
-                 } else if (nz == 2) {
-                     Ez = -(phi_mat(i, j) - phi_mat(i - 1, j)) / dz;
-                 } else {
-                      Ez = 0.0;
-                 }
+                out(i, j).y = 0.0;
             }
 
             if (j > 0 && j < nr - 1) {
-                Er = -(phi_mat(i, j + 1) - phi_mat(i, j - 1)) / (2.0 * dr);
-            } else if (j == 0) {
-                Er = 0.0;
+                out(i, j).x = -(phi_mat(i, j1) - phi_mat(i, j0)) / static_cast<double>(j1 - j0) * dr;
             } else {
-                 if (nr >= 3) {
-                     Er = -(phi_mat(i, j - 2) - 4.0 * phi_mat(i, j - 1) + 3.0 * phi_mat(i, j)) / (2.0 * dr);
-                 } else if (nr == 2) {
-                      Er = -(phi_mat(i, j) - phi_mat(i, j - 1)) / dr;
-                 } else {
-                     Er = 0.0;
-                 }
+                    out(i, j).x = 0.0;
             }
-
-            out(i, j) = {Ez, Er};
         }
+    }
+
+    for (int i = 0; i < nz; ++i) {
+        out(i, 0).x = 0.0;
+    }
+
+    for (int i = 0; i < nz; ++i) {
+        out(i, 0).y = 2.0 * out(i, 1).y - out(i, 2).y;
+        out(i, nr - 1).y = 2.0 * out(i, nr - 2).y - out(i, nr - 3).y;
+    }
+
+    for (int j = 0; j < nr; ++j) {
+        out(0, j).x = 2.0 * out(1, j).x - out(2, j).x;
+        out(nz - 1, j).x = 2.0 * out(nz - 2, j).x - out(nz - 3, j).x;
     }
 }
 
