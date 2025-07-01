@@ -67,5 +67,5 @@ double scattering::electron_excitation_vmag(double kinetic_energy, double excita
 
 double scattering::electron_ionization_vmag(double kinetic_energy, double ionization_energy) {
     // No x2 because of ionization energy division
-    return std::sqrt(spark::constants::e * (kinetic_energy - ionization_energy) / spark::constants::m_e);
+    return std::sqrt(2.0 * spark::constants::e * (kinetic_energy - ionization_energy) / spark::constants::m_e);
 }

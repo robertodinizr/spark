@@ -73,23 +73,19 @@ void electric_field_cylindrical(const spatial::UniformGrid<2>& phi, core::TMatri
 
     for (int i = 0; i < nz; ++i) {
         for (int j = 0; j < nr; ++j) {
-            const int i1 = clamp(0, nz - 1, i + 1);
-            const int i0 = clamp(0, nz - 1, i - 1);
-            const int j1 = clamp(0, nr - 1, j + 1);
-            const int j0 = clamp(0, nr - 1, j - 1);
-
             if (i > 0 && i < nz - 1) {
-                out(i, j).y = -(phi_mat(i1, j) - phi_mat(i0, j)) / static_cast<double>(i1 - i0) * dz;
-            } else {
-                out(i, j).y = 0.0;
-            }
-
-            if (j > 0 && j < nr - 1) {
-                out(i, j).x = -(phi_mat(i, j1) - phi_mat(i, j0)) / static_cast<double>(j1 - j0) * dr;
-            } else {
-                    out(i, j).x = 0.0;
-            }
-        }
+            out(i, j).x = -(phi_mat(i+1, j) - phi_mat(i-1, j)) / (2.0 * dz);
+	    } else {
+	        out(i, j).x = 0.0;
+	    }
+	    if (j > 0 && j < nr - 1) {
+	        out(i, j).y = -(phi_mat(i, j+1) - phi_mat(i, j-1)) / (2.0 * dr);
+	    } else if (j == 0) {
+	        out(i, j).y = 0.0;
+	    } else {
+	        out(i, j).y = 0.0;
+	    }
+	}
     }
 
     for (int i = 0; i < nz; ++i) {
