@@ -128,8 +128,8 @@ void weight_to_grid_cylindrical(const spark::particle::ChargedSpecies<2, NV>& sp
         const double denominator = rj + 0.5 * dr;
         if (denominator <= 0) continue;
 
-        const double f1 = (rj + 0.5 * r_local * dr) / (denominator);
-        const double f2 = (rj + 0.5 * (r_local + 1.0) * dr) / (denominator);
+        const double f1 = std::abs(rj + 0.5 * r_local * dr) / (denominator);
+        const double f2 = std::abs(rj + 0.5 * (r_local + 1.0) * dr) / (denominator);
 
         auto& c = cache_grid(j, k);
         c[0] += (1.0 - z_local) * (1.0 - r_local) * f2;

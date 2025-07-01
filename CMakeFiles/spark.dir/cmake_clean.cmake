@@ -1,0 +1,41 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/spark.dir/src/collisions/mcc.cpp.o"
+  "CMakeFiles/spark.dir/src/collisions/mcc.cpp.o.d"
+  "CMakeFiles/spark.dir/src/collisions/scattering.cpp.o"
+  "CMakeFiles/spark.dir/src/collisions/scattering.cpp.o.d"
+  "CMakeFiles/spark.dir/src/em/cylindrical_poisson.cpp.o"
+  "CMakeFiles/spark.dir/src/em/cylindrical_poisson.cpp.o.d"
+  "CMakeFiles/spark.dir/src/em/electric_field.cpp.o"
+  "CMakeFiles/spark.dir/src/em/electric_field.cpp.o.d"
+  "CMakeFiles/spark.dir/src/em/struct_poisson.cpp.o"
+  "CMakeFiles/spark.dir/src/em/struct_poisson.cpp.o.d"
+  "CMakeFiles/spark.dir/src/em/thomas_poisson.cpp.o"
+  "CMakeFiles/spark.dir/src/em/thomas_poisson.cpp.o.d"
+  "CMakeFiles/spark.dir/src/em/util.cpp.o"
+  "CMakeFiles/spark.dir/src/em/util.cpp.o.d"
+  "CMakeFiles/spark.dir/src/interpolate/field.cpp.o"
+  "CMakeFiles/spark.dir/src/interpolate/field.cpp.o.d"
+  "CMakeFiles/spark.dir/src/interpolate/weight.cpp.o"
+  "CMakeFiles/spark.dir/src/interpolate/weight.cpp.o.d"
+  "CMakeFiles/spark.dir/src/particle/boundary.cpp.o"
+  "CMakeFiles/spark.dir/src/particle/boundary.cpp.o.d"
+  "CMakeFiles/spark.dir/src/particle/pusher.cpp.o"
+  "CMakeFiles/spark.dir/src/particle/pusher.cpp.o.d"
+  "CMakeFiles/spark.dir/src/particle/tiled_boundary.cpp.o"
+  "CMakeFiles/spark.dir/src/particle/tiled_boundary.cpp.o.d"
+  "CMakeFiles/spark.dir/src/random/backends/xoshiro256plus.cpp.o"
+  "CMakeFiles/spark.dir/src/random/backends/xoshiro256plus.cpp.o.d"
+  "CMakeFiles/spark.dir/src/random/backends/ziggurat.cpp.o"
+  "CMakeFiles/spark.dir/src/random/backends/ziggurat.cpp.o.d"
+  "CMakeFiles/spark.dir/src/random/seed.cpp.o"
+  "CMakeFiles/spark.dir/src/random/seed.cpp.o.d"
+  "CMakeFiles/spark.dir/src/spatial/grid.cpp.o"
+  "CMakeFiles/spark.dir/src/spatial/grid.cpp.o.d"
+  "libspark.a"
+  "libspark.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/spark.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

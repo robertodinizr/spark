@@ -89,49 +89,47 @@ void boris_mover_cylindrical(spark::particle::ChargedSpecies<2, 3>& species,
     const double k = species.q() * dt / (2.0 * species.m());
 
     for (size_t i = 0; i < n; ++i) {
+        // Half step acceleration 
+	core::Vec<3> v_minus = v[i] + E[i] * k;
 
-        const double old_z = x[i].x;
-        const double old_r = x[i].y;
-        // Half step update
-        core::Vec<3> v_minus = v[i] + E[i] * k;
-        core::Vec<3> v_plus = v_minus;
-        // Full magnetic rotation
-        if (B[i].norm() > 1e-10) {
-            const double f = std::tan(k * B[i].norm()) / B[i].norm();
-            core::Vec<3> v_prime = v_minus + cross(v_minus, B[i]) * f;
-            v_plus = v_minus + cross(v_prime, B[i]) * (2.0 * f / (1.0 + f * f * B[i].norm() * B[i].norm()));
-        }
-        // Second half acceleration
+	// Magnetic rotation
+	core::Vec<3> v_plus = v_minus;
+	if (B[i].norm() > 1e-12) {
+	    const double f = std::tan(k * B[i].norm()) / B[i].norm();
+	    core::Vec<3> v_prime = v_minus + cross(v_minus, B[i]) * f;
+	    v_plus = v_minus + cross(v_prime, B[i]) * (2.0 * f / (1.0 + f * f * B[i].norm() * B[i].norm()));
+	}
+        
+	// Second half acceleration
 	core::Vec<3> v_new = v_plus + E[i] * k;
-	//position update
-        const double vz = v_new.x;
-        const double vr = v_new.y;
-	const double vtheta = v_new.z;
 
-        x[i].x = old_z + vz * dt;
-	double new_r = old_r;
-	if (old_r > 1e-12) {
-	    const double r_new_sq = old_r * old_r + 2 * old_r * vr * dt + (vr * vr + vtheta * vtheta) * dt * dt;
-	    new_r = std::sqrt(r_new_sq);
+	// Update position
+	const double old_z = x[i].x;
+	const double old_r = x[i].y;
 
-	    const double cos_theta = (old_r + vr * dt) / new_r;
-	    const double sin_theta = (vtheta * dt) / new_r;
+	const double dz = v_new.x * dt;
+	const double dr = v_new.y * dt;
+	const double dtheta = v_new.z * dt;
 
-	    v[i].y = cos_theta * vr - sin_theta * vtheta;
-	    v[i].z = sin_theta * vr + cos_theta * vtheta;
-	} else {
-	    new_r = vr * dt;
-	    v[i].y = vr;
-	    v[i].z = vtheta;
-	}
+	const double r_new = std::sqrt(old_r * old_r + 2 * old_r * dr + dr * dr + (dtheta * dtheta));
 
-	if (new_r < 0) {
-	    new_r = -new_r;
-	    v[i].y = -v[i].y;
-	}
+	if (r_new < 1e-12) {
+	    x[i].y = 1e-12;
+	    v[i].y = -v_new.y;
+	    v[i].z = 0.0;
 
-        x[i].y = new_r;
-	v[i].x = vz;
+            } else {
+                const double cos_theta = (old_r + dr) / r_new;
+		const double sin_theta = dtheta / r_new;
+
+		const double vr_old = v_new.y;
+		const double vtheta_old = v_new.z;
+		v[i].y = cos_theta * vr_old - sin_theta * vtheta_old;
+		v[i].z = sin_theta * vr_old + cos_theta * vtheta_old;
+		x[i].y = r_new;
+	    }
+	x[i].x = old_z + dz;
+	v[i].x = v_new.x;
     }
 }
 

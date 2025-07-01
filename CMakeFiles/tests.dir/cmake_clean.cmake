@@ -1,0 +1,42 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/tests.dir/tests/collisions/test_mcc.cpp.o"
+  "CMakeFiles/tests.dir/tests/collisions/test_mcc.cpp.o.d"
+  "CMakeFiles/tests.dir/tests/collisions/test_reactions.cpp.o"
+  "CMakeFiles/tests.dir/tests/collisions/test_reactions.cpp.o.d"
+  "CMakeFiles/tests.dir/tests/collisions/test_scattering.cpp.o"
+  "CMakeFiles/tests.dir/tests/collisions/test_scattering.cpp.o.d"
+  "CMakeFiles/tests.dir/tests/collisions/test_target.cpp.o"
+  "CMakeFiles/tests.dir/tests/collisions/test_target.cpp.o.d"
+  "CMakeFiles/tests.dir/tests/core/test_matrix.cpp.o"
+  "CMakeFiles/tests.dir/tests/core/test_matrix.cpp.o.d"
+  "CMakeFiles/tests.dir/tests/core/test_vec.cpp.o"
+  "CMakeFiles/tests.dir/tests/core/test_vec.cpp.o.d"
+  "CMakeFiles/tests.dir/tests/em/test_electric_field.cpp.o"
+  "CMakeFiles/tests.dir/tests/em/test_electric_field.cpp.o.d"
+  "CMakeFiles/tests.dir/tests/em/test_poisson.cpp.o"
+  "CMakeFiles/tests.dir/tests/em/test_poisson.cpp.o.d"
+  "CMakeFiles/tests.dir/tests/interpolate/test_field.cpp.o"
+  "CMakeFiles/tests.dir/tests/interpolate/test_field.cpp.o.d"
+  "CMakeFiles/tests.dir/tests/interpolate/test_weight.cpp.o"
+  "CMakeFiles/tests.dir/tests/interpolate/test_weight.cpp.o.d"
+  "CMakeFiles/tests.dir/tests/particle/test_boundary.cpp.o"
+  "CMakeFiles/tests.dir/tests/particle/test_boundary.cpp.o.d"
+  "CMakeFiles/tests.dir/tests/particle/test_emitter.cpp.o"
+  "CMakeFiles/tests.dir/tests/particle/test_emitter.cpp.o.d"
+  "CMakeFiles/tests.dir/tests/particle/test_pusher.cpp.o"
+  "CMakeFiles/tests.dir/tests/particle/test_pusher.cpp.o.d"
+  "CMakeFiles/tests.dir/tests/particle/test_species.cpp.o"
+  "CMakeFiles/tests.dir/tests/particle/test_species.cpp.o.d"
+  "CMakeFiles/tests.dir/tests/random/test_random.cpp.o"
+  "CMakeFiles/tests.dir/tests/random/test_random.cpp.o.d"
+  "CMakeFiles/tests.dir/tests/spatial/test_grid.cpp.o"
+  "CMakeFiles/tests.dir/tests/spatial/test_grid.cpp.o.d"
+  "tests"
+  "tests.pdb"
+  "tests_tests-b12d07c.cmake"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/tests.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()
