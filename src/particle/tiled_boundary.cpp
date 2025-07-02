@@ -207,11 +207,6 @@ void TiledBoundary2D::apply(Species<2, 3>& species) {
     auto* v = species.v();
 
     for (int i = 0; i < n; ++i) {
-	if (x[i].y < 1e-12) {
-            v[i].y = -v[i].y;
-	    x[i].y = 1e-12;
-	    continue;
-	}
 	
         auto& x1 = x[i];
 

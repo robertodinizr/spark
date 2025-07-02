@@ -103,33 +103,29 @@ void boris_mover_cylindrical(spark::particle::ChargedSpecies<2, 3>& species,
 	// Second half acceleration
 	core::Vec<3> v_new = v_plus + E[i] * k;
 
-	// Update position
-	const double old_z = x[i].x;
-	const double old_r = x[i].y;
+	
+        x[i].x += v_new.x * dt;
+        v[i].x = v_new.x;
 
-	const double dz = v_new.x * dt;
-	const double dr = v_new.y * dt;
-	const double dtheta = v_new.z * dt;
+        double r_old = x[i].y;
+        double r_new = r_old + v_new.y * dt;
 
-	const double r_new = std::sqrt(old_r * old_r + 2 * old_r * dr + dr * dr + (dtheta * dtheta));
+        if (r_new <= 0.0) {
+            x[i].y = -r_new;
+            v[i].y = -v_new.y;
+            v[i].z = -v_new.z;
+        } else {
+            const double v_r_old = v_new.y;
+            const double v_theta_old = v_new.z;
+            const double d_theta = (v_theta_old * dt) / r_old;
 
-	if (r_new < 1e-12) {
-	    x[i].y = 1e-12;
-	    v[i].y = -v_new.y;
-	    v[i].z = 0.0;
+            const double cos_d_theta = std::cos(d_theta);
+            const double sin_d_theta = std::sin(d_theta);
 
-            } else {
-                const double cos_theta = (old_r + dr) / r_new;
-		const double sin_theta = dtheta / r_new;
-
-		const double vr_old = v_new.y;
-		const double vtheta_old = v_new.z;
-		v[i].y = cos_theta * vr_old - sin_theta * vtheta_old;
-		v[i].z = sin_theta * vr_old + cos_theta * vtheta_old;
-		x[i].y = r_new;
-	    }
-	x[i].x = old_z + dz;
-	v[i].x = v_new.x;
+            v[i].y = v_r_old * cos_d_theta + v_theta_old * sin_d_theta;
+            v[i].z = -v_r_old * sin_d_theta + v_theta_old * cos_d_theta;
+            x[i].y = r_new;
+        }
     }
 }
 
