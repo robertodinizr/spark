@@ -89,45 +89,41 @@ void boris_mover_cylindrical(spark::particle::ChargedSpecies<2, 3>& species,
     const double k = species.q() * dt / (2.0 * species.m());
 
     for (size_t i = 0; i < n; ++i) {
-        // Half step acceleration 
-	core::Vec<3> v_minus = v[i] + E[i] * k;
-
-	// Magnetic rotation
-	core::Vec<3> v_plus = v_minus;
-	if (B[i].norm() > 1e-12) {
-	    const double f = std::tan(k * B[i].norm()) / B[i].norm();
-	    core::Vec<3> v_prime = v_minus + cross(v_minus, B[i]) * f;
-	    v_plus = v_minus + cross(v_prime, B[i]) * (2.0 * f / (1.0 + f * f * B[i].norm() * B[i].norm()));
-	}
-        
-	// Second half acceleration
-	core::Vec<3> v_new = v_plus + E[i] * k;
-
-	
-        x[i].x += v_new.x * dt;
-        v[i].x = v_new.x;
+        core::Vec<3> v_minus = v[i] + E[i] * k;
+        core::Vec<3> v_plus;
+        if (B[i].norm() > 1e-12) {
+            const double tan_val = std::tan(k * B[i].norm());
+            const double f = tan_val / B[i].norm();
+            core::Vec<3> v_prime = v_minus + cross(v_minus, B[i]) * f;
+            v_plus = v_minus + cross(v_prime, B[i]) * (2.0 * f / (1.0 + tan_val * tan_val));
+        } else {
+            v_plus = v_minus;
+        }
+        core::Vec<3> v_star = v_plus + E[i] * k;
 
         double r_old = x[i].y;
-        double r_new = r_old + v_new.y * dt;
+        double x_cart_local = r_old + v_star.y * dt;
+        double y_cart_local = v_star.z * dt;
 
-        if (r_new <= 0.0) {
-            x[i].y = -r_new;
-            v[i].y = -v_new.y;
-            v[i].z = -v_new.z;
-        } else {
-            const double v_r_old = v_new.y;
-            const double v_theta_old = v_new.z;
-            const double d_theta = (v_theta_old * dt) / r_old;
+        double r_new = std::sqrt(x_cart_local * x_cart_local + y_cart_local * y_cart_local);
 
-            const double cos_d_theta = std::cos(d_theta);
-            const double sin_d_theta = std::sin(d_theta);
-
-            v[i].y = v_r_old * cos_d_theta + v_theta_old * sin_d_theta;
-            v[i].z = -v_r_old * sin_d_theta + v_theta_old * cos_d_theta;
-            x[i].y = r_new;
+        double cos_alpha = 1.0;
+        double sin_alpha = 0.0;
+        
+        if (r_new > 1e-12) {
+            cos_alpha = x_cart_local / r_new;
+            sin_alpha = y_cart_local / r_new;
         }
+
+        x[i].x += v_star.x * dt;
+        x[i].y = r_new;
+
+        v[i].y =  v_star.y * cos_alpha + v_star.z * sin_alpha;
+        v[i].z = -v_star.y * sin_alpha + v_star.z * cos_alpha;
+        v[i].x =  v_star.x;
     }
 }
+
 
 template void boris_mover(ChargedSpecies<1, 3>&, const core::TMatrix<core::Vec<3>, 1>&, const core::TMatrix<core::Vec<3>, 1>&, double);
 template void boris_mover(ChargedSpecies<2, 3>&, const core::TMatrix<core::Vec<3>, 1>&, const core::TMatrix<core::Vec<3>, 1>&, double);
