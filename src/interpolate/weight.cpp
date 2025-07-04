@@ -115,27 +115,32 @@ void weight_to_grid_cylindrical(const spark::particle::ChargedSpecies<2, NV>& sp
         const double r = x[i].y;
         const double rp = r * mdr;
 
-        const auto jf = floor(zp);
-        const auto kf = floor(rp);
-
-        const auto j = static_cast<size_t>(jf);
-        const auto k = static_cast<size_t>(kf);
-
-        const double z_local = zp - jf;
-        const double r_local = rp - kf;
+        const auto j = static_cast<size_t>(floor(zp));
+	const auto k = static_cast<size_t>(floor(rp));
+	
+        if (j >= nz - 1 || k >= nr - 1) continue;
+        const double z_local = zp - j;
+        const double r_local = rp - k;
         const double rj = k * dr;
+        const double r_particle = rj + r_local * dr;
+        
+	const double w_z0 = 1.0 - z_local;
+	const double w_z1 = z_local;
+	const double w_r0 = 1.0 - r_local;
+	const double w_r1 = r_local;
 
-        const double denominator = rj + 0.5 * dr;
-        if (denominator <= 0) continue;
+	const double r_cell_center = rj + 0.5 * dr;
+	if (r_cell_center < 1e-12) continue;
 
-        const double f1 = std::abs(rj + 0.5 * r_local * dr) / (denominator);
-        const double f2 = std::abs(rj + 0.5 * (r_local + 1.0) * dr) / (denominator);
+        const double f1 = (rj + 0.5 * r_local * dr) / r_cell_center;
+        const double f2 = (rj + 0.5 * (r_local + 1.0) * dr) / r_cell_center;
 
         auto& c = cache_grid(j, k);
-        c[0] += (1.0 - z_local) * (1.0 - r_local) * f2;
-        c[1] += z_local * (1.0 - r_local) * f2;
-        c[2] += (1.0 - z_local) * r_local * f1;
-        c[3] += z_local * r_local * f1;
+	
+        c[0] += w_z0 * w_r0 * f2;
+	c[1] += w_z1 * w_r0 * f2;
+	c[2] += w_z0 * w_r1 * f1;
+	c[3] += w_z1 * w_r1 * f1;
     }
 
     for (size_t j = 0; j < nz- 1; j++) {

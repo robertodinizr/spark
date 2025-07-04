@@ -83,7 +83,7 @@ TEST_CASE("Cylindrical Boris Mover Tests", "[particle][pusher][boris_cylindrical
     const double dt = 1e-11;
     
     ChargedSpecies<2, 3> species(charge, mass);
-    TMatrix<Vec<3>, 1> E_field, B_field;
+    TMatrix<Vec<3>, 1> E_field;
 
     SECTION("Movimento em campo nulo") {
         species.add(1, [](auto& v, auto& x){
@@ -91,9 +91,8 @@ TEST_CASE("Cylindrical Boris Mover Tests", "[particle][pusher][boris_cylindrical
             v = {1e5, 2e5, 0.0};
         });
         E_field.resize({1}); E_field.fill({0,0,0});
-        B_field.resize({1}); B_field.fill({0,0,0});
         
-        boris_mover_cylindrical(species, E_field, B_field, dt);
+        boris_mover_cylindrical(species, E_field, dt);
 
         REQUIRE(species.v()[0].x == Catch::Approx(1e5));
         REQUIRE(species.v()[0].y == Catch::Approx(2e5));
@@ -101,27 +100,6 @@ TEST_CASE("Cylindrical Boris Mover Tests", "[particle][pusher][boris_cylindrical
 
         REQUIRE(species.x()[0].x == Catch::Approx(1e5 * dt));
         REQUIRE(species.x()[0].y == Catch::Approx(1.0 + 2e5 * dt));
-    }
-
-    SECTION("Giração em campo magnético axial uniforme (B_z)") {
-        const double B_z = 0.1;
-        const double v_perp = 1e6;
-
-        species.add(1, [=](auto& v, auto& x){
-            x = Vec<2>{0.0, 1.0};
-            v = Vec<3>{0.0, 0.0, v_perp};
-        });
-        E_field.resize({1}); E_field.fill(Vec<3>{0,0,0});
-        B_field.resize({1}); B_field.fill(Vec<3>{0,0,B_z});
-
-        double initial_energy = 0.5 * mass * species.v()[0].norm() * species.v()[0].norm();
-
-        boris_mover_cylindrical(species, E_field, B_field, dt);
-
-        double final_energy = 0.5 * mass * species.v()[0].norm() * species.v()[0].norm();
-        
-        REQUIRE(final_energy == Catch::Approx(initial_energy));
-        REQUIRE(species.v()[0].y != 0.0); 
     }
 
     SECTION("Aceleração em campo elétrico radial (E_r)") {
@@ -133,9 +111,8 @@ TEST_CASE("Cylindrical Boris Mover Tests", "[particle][pusher][boris_cylindrical
         });
         
         E_field.resize({1}); E_field.fill(Vec<3>{0, E_r, 0});
-        B_field.resize({1}); B_field.fill(Vec<3>{0,0,0});
 
-        boris_mover_cylindrical(species, E_field, B_field, dt);
+        boris_mover_cylindrical(species, E_field, dt);
         
         double expected_vr = (charge / mass) * E_r * dt;
         REQUIRE(species.v()[0].y == Catch::Approx(expected_vr));
@@ -150,11 +127,10 @@ TEST_CASE("Cylindrical Boris Mover Tests", "[particle][pusher][boris_cylindrical
             v = Vec<3>{0.0, -2e6, 0.0};
         });
         E_field.resize({1}); E_field.fill(Vec<3>{0,0,0});
-        B_field.resize({1}); B_field.fill(Vec<3>{0,0,0});
 
         double large_dt = 1e-7; 
         
-        boris_mover_cylindrical(species, E_field, B_field, large_dt);
+        boris_mover_cylindrical(species, E_field, large_dt);
 
         REQUIRE(species.x()[0].y >= 0.0);
         REQUIRE(!std::isnan(species.x()[0].y));

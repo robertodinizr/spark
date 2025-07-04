@@ -79,47 +79,39 @@ void spark::particle::boris_mover(spark::particle::ChargedSpecies<NX, 3>& specie
 
 void boris_mover_cylindrical(spark::particle::ChargedSpecies<2, 3>& species,
                              const core::TMatrix<core::Vec<3>, 1>& electric_field,
-                             const core::TMatrix<core::Vec<3>, 1>& magnetic_field,
                              const double dt) {
     const size_t n = species.n();
     auto* v = species.v();
     auto* x = species.x();
     const auto* E = electric_field.data_ptr();
-    const auto* B = magnetic_field.data_ptr();
     const double k = species.q() * dt / (2.0 * species.m());
 
     for (size_t i = 0; i < n; ++i) {
         core::Vec<3> v_minus = v[i] + E[i] * k;
-        core::Vec<3> v_plus;
-        if (B[i].norm() > 1e-12) {
-            const double tan_val = std::tan(k * B[i].norm());
-            const double f = tan_val / B[i].norm();
-            core::Vec<3> v_prime = v_minus + cross(v_minus, B[i]) * f;
-            v_plus = v_minus + cross(v_prime, B[i]) * (2.0 * f / (1.0 + tan_val * tan_val));
-        } else {
-            v_plus = v_minus;
-        }
-        core::Vec<3> v_star = v_plus + E[i] * k;
+        core::Vec<3> v_star = v_minus + E[i] * k;
 
         double r_old = x[i].y;
         double x_cart_local = r_old + v_star.y * dt;
         double y_cart_local = v_star.z * dt;
 
         double r_new = std::sqrt(x_cart_local * x_cart_local + y_cart_local * y_cart_local);
-
+        x[i].x += v_star.x * dt;
+	x[i].y = r_new;
         double cos_alpha = 1.0;
         double sin_alpha = 0.0;
         
         if (r_new > 1e-12) {
             cos_alpha = x_cart_local / r_new;
             sin_alpha = y_cart_local / r_new;
-        }
 
-        x[i].x += v_star.x * dt;
-        x[i].y = r_new;
+	    double vr_old = v_star.y;
+	    double vtheta_old = v_star.z;
 
-        v[i].y =  v_star.y * cos_alpha + v_star.z * sin_alpha;
-        v[i].z = -v_star.y * sin_alpha + v_star.z * cos_alpha;
+	    v[i].y = vr_old * cos_alpha + vtheta_old * sin_alpha;   
+	    v[i].z = -vr_old * sin_alpha + vtheta_old * cos_alpha;
+        } else {
+	    v[i].y = -v[i].y;
+	}
         v[i].x =  v_star.x;
     }
 }

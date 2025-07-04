@@ -122,27 +122,22 @@ void CylindricalPoissonSolver2D::Impl::set_stencils() {
                 HYPRE_StructMatrixSetValues(hypre_A_, index, 1, stencil_indices, stencil_dirichlet);
                 continue;
             }
-
+            double rj = static_cast<double>(j) * dr;
             double coeff_center, coeff_left, coeff_right, coeff_down, coeff_up;
 
             if (j == 0) {
-                coeff_center = -(2.0 * idz2 + 4.0 * idr2);
+                coeff_center = -(2.0 * idz2 + 2.0 * idr2);
                 coeff_left = idz2;
                 coeff_right = idz2;
                 coeff_down = 0.0;
-                coeff_up = 4.0 * idr2;
+                coeff_up = 2.0 * idr2;
             } else {
-                double rj = static_cast<double>(j) * dr;
                 coeff_left = idz2;
                 coeff_right = idz2;
                 coeff_down = idr2 - 0.5 / (rj * dr);
                 coeff_up = idr2 + 0.5 / (rj * dr);
                 coeff_center = - (coeff_left + coeff_right + coeff_down + coeff_up);
             }
-	    if (j == sr - 1) {
-	        coeff_up = 0.0;
-		coeff_center = -(coeff_left + coeff_right + coeff_down);
-	    }
 
             double stencil[5] = {coeff_center, coeff_left, coeff_right, coeff_down, coeff_up};
 

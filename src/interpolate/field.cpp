@@ -89,6 +89,10 @@ void field_at_particles_cylindrical(const spatial::TUniformGrid<T, 2>& field,
     const int nr = grid_dims.y;
 
     for (size_t i = 0; i < n; ++i) {
+        if (x[i].y < 0) {
+            out[i] = T{};
+	    continue;
+	}
 
         const double zp = x[i].x;
         const double rp = x[i].y;
@@ -107,26 +111,31 @@ void field_at_particles_cylindrical(const spatial::TUniformGrid<T, 2>& field,
 
         const double rj = k * dr;
 
-        const double f1 = (rj + 0.5 * r_local * dr) / (rj + 0.5 * dr);
-        const double f2 = (rj + 0.5 * (r_local + 1.0) * dr) / (rj + 0.5 * dr);
+	const int j_clamped = clamp(0, nz - 2, j);
+	const int k_clamped = clamp(0, nr - 2, k);
+	const int j_p1_clamped = clamp(0, nz - 1, j + 1);
+	const int k_p1_clamped = clamp(0, nr - 1, k + 1);
 
-
-        const int iz_clamped = clamp(0, nz - 1, j);
-        const int ir_clamped = clamp(0, nr - 1, k);
-        const int iz_p1_clamped = clamp(0, nz - 1, j + 1);
-        const int ir_p1_clamped = clamp(0, nr - 1, k + 1);
-
-        T val_ij = f(iz_clamped, ir_clamped);
-        T val_i1j = f(iz_p1_clamped, ir_clamped);
-        T val_ij1 = f(iz_clamped, ir_p1_clamped);
-        T val_i1j1 = f(iz_p1_clamped, ir_p1_clamped);
-
-        const double a1 = (1.0 - z_local) * (1.0 - r_local) * f2;
-        const double a2 = z_local * (1.0 - r_local) * f2;
-        const double a3 = z_local * r_local * f1;
-        const double a4 = (1.0 - z_local) * r_local * f1; 
-
-        out[i] = val_ij * a1 + val_i1j * a2 + val_i1j1 * a3 + val_ij1 * a4;
+	const double r_cell_center = rj + 0.5 * dr;
+	if (r_cell_center < 1e-12) {
+            out[i] = f(j_clamped, 0) * (1.0 - z_local) + f(j_p1_clamped, 0) * z_local;
+            continue;
+        }
+		    
+        const double f1 = (rj + 0.5 * r_local * dr) / r_cell_center;
+	const double f2 = (rj + 0.5 * (r_local + 1.0) * dr) / r_cell_center;
+		    
+        T val_jk   = f(j_clamped, k_clamped);
+	T val_j1k  = f(j_p1_clamped, k_clamped);
+        T val_jk1  = f(j_clamped, k_p1_clamped);
+	T val_j1k1 = f(j_p1_clamped, k_p1_clamped);
+		    
+	const double a1 = (1.0 - z_local) * (1.0 - r_local) * f2;
+	const double a2 = z_local * (1.0 - r_local) * f2;
+	const double a3 = z_local * r_local * f1;
+	const double a4 = (1.0 - z_local) * r_local * f1;
+		    
+	out[i] = val_jk * a1 + val_j1k * a2 + val_j1k1 * a3 + val_jk1 * a4;
     }
 }
 }  // namespace
