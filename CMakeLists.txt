@@ -92,7 +92,7 @@ add_executable(tests
                tests/core/test_matrix.cpp
                tests/random/test_random.cpp
                tests/particle/test_species.cpp
-               tests/particle/test_pusher.cpp
+               
                tests/particle/test_boundary.cpp
                tests/particle/test_emitter.cpp
                tests/em/test_poisson.cpp

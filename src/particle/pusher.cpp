@@ -45,8 +45,8 @@ void spark::particle::move_particles(spark::particle::ChargedSpecies<2, 3>& spec
 
 template<unsigned NX>
 void spark::particle::boris_mover(spark::particle::ChargedSpecies<NX, 3>& species,
-                                     const core::TMatrix<core::Vec<3>, 1>& electric_field,
-                                     const core::TMatrix<core::Vec<3>, 1>& magnetic_field,
+                                     const spark::core::TMatrix<core::Vec<3>, 1>& electric_field,
+                                     const spark::core::TMatrix<core::Vec<3>, 1>& magnetic_field,
                                      const double dt) {
     const size_t n = species.n();
     auto* v = species.v();
@@ -77,42 +77,114 @@ void spark::particle::boris_mover(spark::particle::ChargedSpecies<NX, 3>& specie
     }
 }
 
-void boris_mover_cylindrical(spark::particle::ChargedSpecies<2, 3>& species,
-                             const core::TMatrix<core::Vec<3>, 1>& electric_field,
-                             const double dt) {
+void boris_mover_cylindrical(ChargedSpecies<2,3>& species,
+                             const core::TMatrix<core::Vec<2>,1>& E_field,
+                             double dt)
+{
     const size_t n = species.n();
     auto* v = species.v();
     auto* x = species.x();
-    const auto* E = electric_field.data_ptr();
-    const double k = species.q() * dt / (2.0 * species.m());
+    const double qm = species.q() / species.m();
 
     for (size_t i = 0; i < n; ++i) {
-        core::Vec<3> v_minus = v[i] + E[i] * k;
-        core::Vec<3> v_star = v_minus + E[i] * k;
+	// Cartesian 
+	core::Vec<3> v_cart = {v[i].y, v[i].z, v[i].x};
+	core::Vec<3> E_cart = {E_field[i].y, 0.0, E_field[i].x};
+	core::Vec<3> B_cart = {0.0, 0.0, 0.0};
 
+        // Mover in cartesian coordinates
+        // Half-step electric acceleration
+        v_cart = v_cart + E_cart * (qm * dt / 2.0);
+
+        // Full magnetic rotation
+	core::Vec<3> t = B_cart * (qm * dt / 2.0);
+
+        if (t.norm() * t.norm() > 1e-12) {
+            core::Vec<3> s = t * (2.0 / (1.0 + t.norm() * t.norm()));
+            core::Vec<3> v_prime = v_cart + cross(v_cart, t);
+            v_cart = v_cart + cross(v_prime, s);
+        }
+
+        // Second half-step electric acceleration
+        v_cart = v_cart + E_cart * (qm * dt / 2.0);
+
+        // Position update in cartesian coordinates and rotate to ZR
+        double z_new = x[i].x + v_cart.z * dt;
         double r_old = x[i].y;
-        double x_cart_local = r_old + v_star.y * dt;
-        double y_cart_local = v_star.z * dt;
+        double x_cart_new = r_old + v_cart.x * dt;
+        double y_cart_new = v_cart.y * dt; 
 
-        double r_new = std::sqrt(x_cart_local * x_cart_local + y_cart_local * y_cart_local);
-        x[i].x += v_star.x * dt;
-	x[i].y = r_new;
+        double r_new = std::sqrt(x_cart_new * x_cart_new + y_cart_new * y_cart_new);
+        
         double cos_alpha = 1.0;
         double sin_alpha = 0.0;
+
+        // Rotate to ZR
+	if (r_new > 1e-12) {
+            double cos_alpha = x_cart_new / r_new;
+            double sin_alpha = y_cart_new / r_new;
+        }
+
+        double vr_old = v_cart.x;
+        double vtheta_old = v_cart.y;
+        double vr_new = cos_alpha * vr_old + sin_alpha * vtheta_old;
+        double vtheta_new = -sin_alpha * vr_old + cos_alpha * vtheta_old;
         
-        if (r_new > 1e-12) {
-            cos_alpha = x_cart_local / r_new;
-            sin_alpha = y_cart_local / r_new;
+        x[i].x = z_new;
+	x[i].y = r_new;
+	v[i].x = v_cart.z;
+	v[i].y = vr_new;
+	v[i].z = vtheta_new;
 
-	    double vr_old = v_star.y;
-	    double vtheta_old = v_star.z;
+        if (x[i].y < 1e-12) {
+            x[i].y = 1e-12;
+            v[i].y = -v[i].y;
+        }	
+    }
+}
 
-	    v[i].y = vr_old * cos_alpha + vtheta_old * sin_alpha;   
-	    v[i].z = -vr_old * sin_alpha + vtheta_old * cos_alpha;
-        } else {
-	    v[i].y = -v[i].y;
-	}
-        v[i].x =  v_star.x;
+void move_particles_cylindrical(ChargedSpecies<2, 3>& species,
+                                const core::TMatrix<core::Vec<3>, 1>& E_field,
+                                double dt)
+{
+    const size_t n = species.n();
+    auto* v = species.v();
+    auto* x = species.x();
+    const double qm = species.q() / species.m();
+
+    for (size_t i = 0; i < n; ++i) {
+        v[i].x += E_field[i].z * qm * dt;
+	v[i].y += E_field[i].y * qm * dt;
+	v[i].z += E_field[i].x * qm * dt;
+
+        double z_new = x[i].x + v[i].x * dt;
+	double r_old = x[i].y;
+	double dr = v[i].y * dt;
+	double dtheta = v[i].z * dt;
+
+	double r_new = std::sqrt((r_old + dr) * (r_old + dr) + dtheta * dtheta);
+
+	double cos_alpha = 1.0;
+        double sin_alpha = 0.0;
+
+	if (r_new > 1e-12) {
+            cos_alpha = (r_old + dr) / r_new;
+            sin_alpha = dtheta / r_new;
+        }
+
+	double vr_old = v[i].y;
+	double vtheta_old = v[i].z;
+
+	v[i].y = cos_alpha * vr_old + sin_alpha * vtheta_old;
+        v[i].z = -sin_alpha * vr_old + cos_alpha * vtheta_old;
+
+	x[i].x = z_new;
+	x[i].y = r_new;
+
+        if (x[i].y < 0.0) {
+            x[i].y = -x[i].y;
+            v[i].y = -v[i].y;
+        }
     }
 }
 

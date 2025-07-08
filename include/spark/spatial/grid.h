@@ -59,14 +59,13 @@ public:
         return (static_cast<T>(i_r) + static_cast<T>(0.5)) * prop_.dx.y;
     }
 
-    T get_annular_cell_volume(size_t i_r, size_t i_z) const {
-        const T dr = prop_.dx.y;
-        const T dz = prop_.dx.x;
-        T r_half;
-
-        r_half = get_mid_radius(i_r);
-
-        return 2 * constants::pi * r_half * dr * dz;
+    T get_annular_cell_volume(size_t j, double dr, double dz) const {
+            if (j == 0) {
+        return spark::constants::pi * pow(dr/2, 2) * dz;
+    }
+    double r_inner = (j - 0.5) * dr;
+    double r_outer = (j + 0.5) * dr;
+    return spark::constants::pi * ((r_outer * r_outer) - (r_inner * r_inner)) * dz;
     }
 
     void get_cell_area(size_t i_r, size_t i_z, T& area) const {

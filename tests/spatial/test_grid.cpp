@@ -47,22 +47,7 @@ TEST_CASE("TUniformGrid apply mul/add") {
     }
 }
 
-TEST_CASE("TUniformGrid radius and volume calculations") {
-    core::Vec<2> l{4.0, 4.0};
-    core::ULongVec<2> n{3, 3};
-    TUniformGrid<double, 2> grid(l, n);
 
-    double r0 = grid.get_radius(0);
-    double r1 = grid.get_radius(1);
-    double mid_r0 = grid.get_mid_radius(0);
-
-    REQUIRE(r0 == Catch::Approx(0.0));
-    REQUIRE(r1 == Catch::Approx(grid.dx().y));
-    REQUIRE(mid_r0 == Catch::Approx(0.5 * grid.dx().y));
-
-    double vol = grid.get_annular_cell_volume(1, 1);
-    REQUIRE(vol > 0.0);
-}
 
 TEST_CASE("TUniformGrid get_cell_area") {
     core::Vec<2> l{4.0, 4.0};

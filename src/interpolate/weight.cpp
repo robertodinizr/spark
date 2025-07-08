@@ -121,29 +121,26 @@ void weight_to_grid_cylindrical(const spark::particle::ChargedSpecies<2, NV>& sp
         if (j >= nz - 1 || k >= nr - 1) continue;
         const double z_local = zp - j;
         const double r_local = rp - k;
-        const double rj = k * dr;
-        const double r_particle = rj + r_local * dr;
-        
-	const double w_z0 = 1.0 - z_local;
-	const double w_z1 = z_local;
-	const double w_r0 = 1.0 - r_local;
-	const double w_r1 = r_local;
 
-	const double r_cell_center = rj + 0.5 * dr;
-	if (r_cell_center < 1e-12) continue;
+	const double r0 = 0.0;
+	const double rj = r0 + k * dr;
 
-        const double f1 = (rj + 0.5 * r_local * dr) / r_cell_center;
-        const double f2 = (rj + 0.5 * (r_local + 1.0) * dr) / r_cell_center;
+        double f1 = 1.0;
+	double f2 = 1.0;
+
+        if (rj > 0) {
+	    f1 = (rj + 0.5 * r_local * dr) / (rj + 0.5 * dr);
+            f2 = (rj + 0.5 * (r_local + 1) * dr) / (rj + 0.5 * dr);
+	}	
 
         auto& c = cache_grid(j, k);
-	
-        c[0] += w_z0 * w_r0 * f2;
-	c[1] += w_z1 * w_r0 * f2;
-	c[2] += w_z0 * w_r1 * f1;
-	c[3] += w_z1 * w_r1 * f1;
+        c[0] += (1.0 - z_local) * (1.0 - r_local) * f2;
+        c[1] += z_local * (1.0 - r_local) * f2;
+        c[2] += (1.0 - z_local) * r_local * f1;
+        c[3] += z_local * r_local * f1;
     }
 
-    for (size_t j = 0; j < nz- 1; j++) {
+    for (size_t j = 0; j < nz - 1; j++) {
         for (size_t k = 0; k < nr - 1; k++) {
             auto& c = cache_grid(j, k);
 

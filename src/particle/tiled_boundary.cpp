@@ -222,6 +222,12 @@ void TiledBoundary2D::apply(Species<2, 3>& species) {
         const auto x0_cell = x0_tmp.apply<std::floor>().to<int>();
         const auto x1_cell = x1_tmp.apply<std::floor>().to<int>();
 
+	if (x1.y < 0) {
+	    x1.y = -x1.y;
+	    v1.y = -v1.y;
+	    continue;
+	}
+
         const uint8_t distance_to_boundary = distance_cells_(x0_cell.x, x0_cell.y);
         if (std::abs(x0_cell.x - x1_cell.x) + std::abs(x0_cell.y - x1_cell.y) <
             distance_to_boundary)

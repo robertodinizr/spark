@@ -123,6 +123,7 @@ void CylindricalPoissonSolver2D::Impl::set_stencils() {
                 continue;
             }
             double rj = static_cast<double>(j) * dr;
+	    double r_term = (j == 0) ? 0.0 : 1.0 / (rj * dr);
             double coeff_center, coeff_left, coeff_right, coeff_down, coeff_up;
 
             if (j == 0) {
@@ -134,8 +135,8 @@ void CylindricalPoissonSolver2D::Impl::set_stencils() {
             } else {
                 coeff_left = idz2;
                 coeff_right = idz2;
-                coeff_down = idr2 - 0.5 / (rj * dr);
-                coeff_up = idr2 + 0.5 / (rj * dr);
+                coeff_down = idr2 - 0.5 * r_term;;
+                coeff_up = idr2 + 0.5 * r_term;
                 coeff_center = - (coeff_left + coeff_right + coeff_down + coeff_up);
             }
 
@@ -168,6 +169,11 @@ void CylindricalPoissonSolver2D::Impl::set_stencils() {
                                    stencil_offsets[p][0], stencil_offsets[p][1]);
                 }
             }
+
+            if (j == 0 && cell == CellType::BoundaryNeumann) {
+	        stencil[3] = 0.0;
+	    }
+
             HYPRE_StructMatrixSetValues(hypre_A_, index, 5, stencil_indices, stencil);
         }
     }

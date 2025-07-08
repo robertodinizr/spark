@@ -76,66 +76,59 @@ void field_at_particles_cylindrical(const spatial::TUniformGrid<T, 2>& field,
     out.resize({n});
 
     auto* x = species.x();
+    
+    const auto dz = field.dx().x;
+    const auto dr = field.dx().y;
 
-    const auto dx = field.dx();
-    const double dz = dx.x;
-    const double dr = dx.y;
-    const double mdz = 1.0 / dz;
-    const double mdr = 1.0 / dr;
+    const auto [mdz, mdr] = 1.0 / field.dx();
+    const auto [nz, nr] = field.n();
 
     const auto& f = field.data();
-    const auto grid_dims = field.n();
-    const int nz = grid_dims.x;
-    const int nr = grid_dims.y;
 
     for (size_t i = 0; i < n; ++i) {
         if (x[i].y < 0) {
             out[i] = T{};
-	    continue;
-	}
+            continue;
+        }
 
-        const double zp = x[i].x;
-        const double rp = x[i].y;
+        const double zp_norm = x[i].x * mdz;
+        const double rp_norm = x[i].y * mdr;
 
-        const double zp_norm = zp * mdz;
-        const double rp_norm = rp * mdr;
-
-        const double jf = floor(zp_norm);
-        const double kf = floor(rp_norm);
+        const auto jf = floor(zp_norm);
+        const auto kf = floor(rp_norm);
 
         const int j = static_cast<int>(jf);
         const int k = static_cast<int>(kf);
 
+        if (j < 0 || j >= nz - 1 || k < 0 || k >= nr - 1) {
+            out[i] = T{};
+            continue;
+        }
+
         const double z_local = zp_norm - jf;
         const double r_local = rp_norm - kf;
 
-        const double rj = k * dr;
+	const double r0 = 0.0;
+	const double r = x[i].y;
+	const double rj = r0 + k * dr;
 
-	const int j_clamped = clamp(0, nz - 2, j);
-	const int k_clamped = clamp(0, nr - 2, k);
-	const int j_p1_clamped = clamp(0, nz - 1, j + 1);
-	const int k_p1_clamped = clamp(0, nr - 1, k + 1);
+	double f1 = 1.0;
+	double f2 = 1.0;
 
-	const double r_cell_center = rj + 0.5 * dr;
-	if (r_cell_center < 1e-12) {
-            out[i] = f(j_clamped, 0) * (1.0 - z_local) + f(j_p1_clamped, 0) * z_local;
-            continue;
-        }
-		    
-        const double f1 = (rj + 0.5 * r_local * dr) / r_cell_center;
-	const double f2 = (rj + 0.5 * (r_local + 1.0) * dr) / r_cell_center;
-		    
-        T val_jk   = f(j_clamped, k_clamped);
-	T val_j1k  = f(j_p1_clamped, k_clamped);
-        T val_jk1  = f(j_clamped, k_p1_clamped);
-	T val_j1k1 = f(j_p1_clamped, k_p1_clamped);
-		    
-	const double a1 = (1.0 - z_local) * (1.0 - r_local) * f2;
-	const double a2 = z_local * (1.0 - r_local) * f2;
-	const double a3 = z_local * r_local * f1;
-	const double a4 = (1.0 - z_local) * r_local * f1;
-		    
-	out[i] = val_jk * a1 + val_j1k * a2 + val_j1k1 * a3 + val_jk1 * a4;
+	if (rj > 0){
+	    f1 = (rj + 0.5 * r_local * dr) / (rj + 0.5 * dr);
+	    f2 = (rj + 0.5 * (r_local + 1) * dr) / (rj + 0.5 * dr);
+	}
+
+        const double w_z0 = 1.0 - z_local;
+        const double w_z1 = z_local;
+        const double w_r0 = 1.0 - r_local;
+        const double w_r1 = r_local;
+
+        out[i] = f(j, k) * (w_z0 * w_r0) * f2 +
+                 f(j + 1, k) * (w_z1 * w_r0) * f2 +
+                 f(j, k + 1) * (w_z0 * w_r1) * f1 +
+                 f(j + 1, k + 1) * (w_z1 * w_r1) * f1;
     }
 }
 }  // namespace

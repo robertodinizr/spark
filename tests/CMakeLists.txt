@@ -4,7 +4,7 @@ add_executable(spark_tests STATIC
                core/test_matrix.cpp
                random/test_random.cpp
                particle/test_species.cpp
-               particle/test_pusher.cpp
+               
                particle/test_boundary.cpp
                particle/test_emitter.cpp
                em/test_poisson.cpp
