@@ -76,59 +76,43 @@ void field_at_particles_cylindrical(const spatial::TUniformGrid<T, 2>& field,
     out.resize({n});
 
     auto* x = species.x();
-    
-    const auto dz = field.dx().x;
-    const auto dr = field.dx().y;
 
-    const auto [mdz, mdr] = 1.0 / field.dx();
-    const auto [nz, nr] = field.n();
-
+    const auto dx = field.dx();
     const auto& f = field.data();
+    const auto mdx = 1.0 / dx;
+    const auto nz = field.n().x;
+    const auto nr = field.n().y;
 
     for (size_t i = 0; i < n; ++i) {
-        if (x[i].y < 0) {
-            out[i] = T{};
-            continue;
+        if (x[i].y < 1e-8) { continue; }
+        const auto xp = x[i] * mdx;
+        const auto xmesh_lower_left = xp.template apply<std::floor>();
+        const auto idx = xmesh_lower_left.template to<size_t>();
+
+        const double r = x[i].y;
+        const double rj = idx.y * dx.y;
+        const double denom = rj + 0.5 * dx.y;
+        
+        double f1 = 1.0;
+        double f2 = 1.0;
+        
+        if (denom > 1e-8) {
+            f1 = (rj + 0.5 * (xp.y - idx.y) * dx.y) / denom;
+            f2 = (rj + 0.5 * ((xp.y - idx.y) + 1) * dx.y) / denom;
         }
 
-        const double zp_norm = x[i].x * mdz;
-        const double rp_norm = x[i].y * mdr;
+        const double z_local = xp.x - idx.x;
+        const double r_local = xp.y - idx.y;
 
-        const auto jf = floor(zp_norm);
-        const auto kf = floor(rp_norm);
+        const double a1 = (1 - z_local) * (1 - r_local) * static_cast<double>(f2);
+        const double a2 = z_local * (1 - r_local) * static_cast<double>(f2);
+        const double a3 = z_local * r_local * static_cast<double>(f1);
+        const double a4 = (1 - z_local) * r_local * static_cast<double>(f1);
 
-        const int j = static_cast<int>(jf);
-        const int k = static_cast<int>(kf);
-
-        if (j < 0 || j >= nz - 1 || k < 0 || k >= nr - 1) {
-            out[i] = T{};
-            continue;
-        }
-
-        const double z_local = zp_norm - jf;
-        const double r_local = rp_norm - kf;
-
-	const double r0 = 0.0;
-	const double r = x[i].y;
-	const double rj = r0 + k * dr;
-
-	double f1 = 1.0;
-	double f2 = 1.0;
-
-	if (rj > 0){
-	    f1 = (rj + 0.5 * r_local * dr) / (rj + 0.5 * dr);
-	    f2 = (rj + 0.5 * (r_local + 1) * dr) / (rj + 0.5 * dr);
-	}
-
-        const double w_z0 = 1.0 - z_local;
-        const double w_z1 = z_local;
-        const double w_r0 = 1.0 - r_local;
-        const double w_r1 = r_local;
-
-        out[i] = f(j, k) * (w_z0 * w_r0) * f2 +
-                 f(j + 1, k) * (w_z1 * w_r0) * f2 +
-                 f(j, k + 1) * (w_z0 * w_r1) * f1 +
-                 f(j + 1, k + 1) * (w_z1 * w_r1) * f1;
+        out[i] = a1 * f(idx.x, idx.y) 
+                + a2 * f(idx.x + 1, idx.y) 
+                + a3 * f(idx.x + 1, idx.y + 1) 
+                + a4 * f(idx.x, idx.y + 1);
     }
 }
 }  // namespace

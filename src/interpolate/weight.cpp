@@ -94,7 +94,7 @@ void weight_to_grid(const spark::particle::ChargedSpecies<2, NV>& species,
 template <unsigned NV>
 void weight_to_grid_cylindrical(const spark::particle::ChargedSpecies<2, NV>& species,
                                 spark::spatial::UniformGrid<2>& out) {
-    const auto n = species.n();
+        const auto n = species.n();
     auto* x = species.x();
 
     static auto cache_grid = spark::core::TMatrix<std::array<double, 4>, 2>();
@@ -109,35 +109,32 @@ void weight_to_grid_cylindrical(const spark::particle::ChargedSpecies<2, NV>& sp
     auto& grid_data = out.data();
 
     for (size_t i = 0; i < n; ++i) {
-        if (x[i].y < 0) continue;
-
         const double zp = x[i].x * mdz;
         const double r = x[i].y;
         const double rp = r * mdr;
-
+        if (r < 1e-8) { continue;}
         const auto j = static_cast<size_t>(floor(zp));
-	const auto k = static_cast<size_t>(floor(rp));
-	
-        if (j >= nz - 1 || k >= nr - 1) continue;
+        const auto k = static_cast<size_t>(floor(rp));
+        
         const double z_local = zp - j;
         const double r_local = rp - k;
 
-	const double r0 = 0.0;
-	const double rj = r0 + k * dr;
-
+        const double rj = k * dr;
+        const double denom = rj + 0.5 * dr;
+       
         double f1 = 1.0;
-	double f2 = 1.0;
+        double f2 = 1.0;
 
-        if (rj > 0) {
-	    f1 = (rj + 0.5 * r_local * dr) / (rj + 0.5 * dr);
-            f2 = (rj + 0.5 * (r_local + 1) * dr) / (rj + 0.5 * dr);
-	}	
+        if (denom > 1e-8) {
+            f1 = rj + 0.5 * r_local * dr / denom;
+            f2 = rj + 0.5 * (r_local + 1) * dr / denom;
+        }
 
         auto& c = cache_grid(j, k);
-        c[0] += (1.0 - z_local) * (1.0 - r_local) * f2;
-        c[1] += z_local * (1.0 - r_local) * f2;
-        c[2] += (1.0 - z_local) * r_local * f1;
-        c[3] += z_local * r_local * f1;
+        c[0] += (1.0 - z_local) * (1.0 - r_local) * static_cast<double>(f2);
+        c[1] += z_local * (1.0 - r_local) * static_cast<double>(f2);
+        c[2] += (1.0 - z_local) * r_local * static_cast<double>(f1);
+        c[3] += z_local * r_local * static_cast<double>(f1);
     }
 
     for (size_t j = 0; j < nz - 1; j++) {
@@ -150,6 +147,17 @@ void weight_to_grid_cylindrical(const spark::particle::ChargedSpecies<2, NV>& sp
             grid_data(j + 1, k + 1) += c[3];
         }
     }
+
+    for (size_t j = 0; j < nz; j++) {
+        grid_data(j, 0) *= 2.0;
+        grid_data(j, nr - 1) *= 2.0;
+    }
+
+    for (size_t k = 0; k < nr; k++) {
+        grid_data(0, k) *= 2.0;
+        grid_data(nz - 1, k) *= 2.0;
+    }
+
 }
 }  // namespace
 

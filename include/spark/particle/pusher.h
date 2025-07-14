@@ -22,6 +22,6 @@ void boris_mover_cylindrical(ChargedSpecies<2, 3>& species,
                     double dt);
 
 void move_particles_cylindrical(ChargedSpecies<2, 3>& species,
-                                const core::TMatrix<core::Vec<3>, 1>& E_field,
+                                const core::TMatrix<core::Vec<2>, 1>& E_field,
                                 double dt);
 } // namespace spark::particle

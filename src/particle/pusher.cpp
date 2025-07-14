@@ -88,13 +88,13 @@ void boris_mover_cylindrical(ChargedSpecies<2,3>& species,
 
     for (size_t i = 0; i < n; ++i) {
 	// Cartesian 
-	core::Vec<3> v_cart = {v[i].y, v[i].z, v[i].x};
-	core::Vec<3> E_cart = {E_field[i].y, 0.0, E_field[i].x};
+	core::Vec<3> v_cart = {v[i].z, v[i].y, v[i].x};
+	core::Vec<3> E_cart = {0.0, E_field[i].y, E_field[i].x};
 	core::Vec<3> B_cart = {0.0, 0.0, 0.0};
 
         // Mover in cartesian coordinates
         // Half-step electric acceleration
-        v_cart = v_cart + E_cart * (qm * dt / 2.0);
+        v_cart += E_cart * (qm * dt / 2.0);
 
         // Full magnetic rotation
 	core::Vec<3> t = B_cart * (qm * dt / 2.0);
@@ -103,15 +103,17 @@ void boris_mover_cylindrical(ChargedSpecies<2,3>& species,
             core::Vec<3> s = t * (2.0 / (1.0 + t.norm() * t.norm()));
             core::Vec<3> v_prime = v_cart + cross(v_cart, t);
             v_cart = v_cart + cross(v_prime, s);
-        }
+        } else {
+	      v_cart = v_cart;  
+	}
 
         // Second half-step electric acceleration
-        v_cart = v_cart + E_cart * (qm * dt / 2.0);
+        v_cart += E_cart * (qm * dt / 2.0);
 
         // Position update in cartesian coordinates and rotate to ZR
         double z_new = x[i].x + v_cart.z * dt;
         double r_old = x[i].y;
-        double x_cart_new = r_old + v_cart.x * dt;
+        double x_cart_new = v_cart.z * dt;
         double y_cart_new = v_cart.y * dt; 
 
         double r_new = std::sqrt(x_cart_new * x_cart_new + y_cart_new * y_cart_new);
@@ -125,8 +127,8 @@ void boris_mover_cylindrical(ChargedSpecies<2,3>& species,
             double sin_alpha = y_cart_new / r_new;
         }
 
-        double vr_old = v_cart.x;
-        double vtheta_old = v_cart.y;
+        double vr_old = v_cart.y;
+        double vtheta_old = v_cart.z;
         double vr_new = cos_alpha * vr_old + sin_alpha * vtheta_old;
         double vtheta_new = -sin_alpha * vr_old + cos_alpha * vtheta_old;
         
@@ -134,57 +136,43 @@ void boris_mover_cylindrical(ChargedSpecies<2,3>& species,
 	x[i].y = r_new;
 	v[i].x = v_cart.z;
 	v[i].y = vr_new;
-	v[i].z = vtheta_new;
-
-        if (x[i].y < 1e-12) {
-            x[i].y = 1e-12;
-            v[i].y = -v[i].y;
-        }	
+	v[i].z = vtheta_new;	
     }
 }
 
 void move_particles_cylindrical(ChargedSpecies<2, 3>& species,
-                                const core::TMatrix<core::Vec<3>, 1>& E_field,
+                                const core::TMatrix<core::Vec<2>, 1>& E_field,
                                 double dt)
 {
     const size_t n = species.n();
     auto* v = species.v();
     auto* x = species.x();
-    const double qm = species.q() / species.m();
+    const auto* f = E_field.data_ptr();
+    const double k = species.q() * dt / species.m();
 
-    for (size_t i = 0; i < n; ++i) {
-        v[i].x += E_field[i].z * qm * dt;
-	v[i].y += E_field[i].y * qm * dt;
-	v[i].z += E_field[i].x * qm * dt;
+    for (size_t i = 0; i < n; i++) {
+        v[i].x += f[i].x * k;
+        v[i].y += f[i].y * k;
 
-        double z_new = x[i].x + v[i].x * dt;
-	double r_old = x[i].y;
-	double dr = v[i].y * dt;
-	double dtheta = v[i].z * dt;
+	double r_initial = x[i].y;
+	double z_initial = x[i].x;
 
-	double r_new = std::sqrt((r_old + dr) * (r_old + dr) + dtheta * dtheta);
+        x[i].x += v[i].x * dt;
+        x[i].y += v[i].y * dt;
 
-	double cos_alpha = 1.0;
-        double sin_alpha = 0.0;
+	double A = v[i].z * dt;
+	double B = x[i].y;
 
-	if (r_new > 1e-12) {
-            cos_alpha = (r_old + dr) / r_new;
-            sin_alpha = dtheta / r_new;
-        }
+	double r = std::sqrt((A * A) + (B * B));
+	double cos = B/r;
+	double sin = A/r;
 
-	double vr_old = v[i].y;
-	double vtheta_old = v[i].z;
+	double v1 = v[i].y;
+	double v2 = v[i].z;
 
-	v[i].y = cos_alpha * vr_old + sin_alpha * vtheta_old;
-        v[i].z = -sin_alpha * vr_old + cos_alpha * vtheta_old;
-
-	x[i].x = z_new;
-	x[i].y = r_new;
-
-        if (x[i].y < 0.0) {
-            x[i].y = -x[i].y;
-            v[i].y = -v[i].y;
-        }
+	x[i].y = r;
+	v[i].y = cos * v1 + sin * v2;
+	v[i].z = -sin * v1 + cos * v2;
     }
 }
 
