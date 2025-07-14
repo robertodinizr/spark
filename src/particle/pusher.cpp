@@ -94,7 +94,7 @@ void boris_mover_cylindrical(ChargedSpecies<2,3>& species,
 
         // Mover in cartesian coordinates
         // Half-step electric acceleration
-        v_cart += E_cart * (qm * dt / 2.0);
+        v_cart = v_cart + E_cart * (qm * dt / 2.0);
 
         // Full magnetic rotation
 	core::Vec<3> t = B_cart * (qm * dt / 2.0);
@@ -108,7 +108,7 @@ void boris_mover_cylindrical(ChargedSpecies<2,3>& species,
 	}
 
         // Second half-step electric acceleration
-        v_cart += E_cart * (qm * dt / 2.0);
+        v_cart = v_cart + E_cart * (qm * dt / 2.0);
 
         // Position update in cartesian coordinates and rotate to ZR
         double z_new = x[i].x + v_cart.z * dt;
