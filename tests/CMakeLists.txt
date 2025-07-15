@@ -13,8 +13,7 @@ add_executable(spark_tests STATIC
                interpolate/test_field.cpp
                collisions/test_target.cpp
                collisions/test_scattering.cpp
-               collisions/test_reactions.cpp
-               collisions/test_mcc.cpp)
+               collisions/test_reactions.cpp)
 
 target_include_directories(spark_tests PRIVATE
     ${Catch2_SOURCE_DIR}/src

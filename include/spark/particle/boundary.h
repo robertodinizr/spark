@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 
 #include "spark/core/matrix.h"
 #include "spark/core/vec.h"
@@ -21,12 +22,6 @@ struct TiledBoundary {
     BoundaryType boundary_type = BoundaryType::Absorbing;
 };
 
-struct CollisionHit {
-    core::Vec<2> normal;
-    core::Vec<2> pos;
-    uint8_t val = 0;
-};
-
 class TiledBoundary2D {
 public:
     TiledBoundary2D() = default;
@@ -35,9 +30,15 @@ public:
                     double dt,
                     bool empty_box = false);
 
-    void apply(Species<2, 3>& species);
+    // TODO(lui): remove the dependency on std::function by using templates and lambdas. However
+    // this means that we need to move all the code to the header.
+    using Callback = std::function<void(int, core::Vec<2>, core::Vec<3>)>;
+
+    void apply(Species<2, 3>& species, const Callback& collision_callback = nullptr);
     uint8_t cell(int i, int j) const;
     uint8_t cell(const core::Vec<2>& pos) const;
+
+    const std::vector<TiledBoundary>& boundaries() const { return boundaries_; }
 
 private:
     void add_boundary(const TiledBoundary& boundary, uint8_t id);

@@ -24,6 +24,13 @@ struct std::hash<IntVec<2>> {
 };
 
 namespace {
+
+struct CollisionHit {
+    spark::core::Vec<2> normal;
+    spark::core::Vec<2> pos;
+    uint8_t val = 0;
+};
+
 #define CMOD(idx, size) ((size + (idx % size)) % size)
 #define CMODV(idx, size_vec) CMOD(idx.x, size_vec.x), CMOD(idx.y, size_vec.y)
 
@@ -42,7 +49,7 @@ int cmod(int idx, int size) {
 void grid_raycast(const spark::core::TMatrix<uint8_t, 2>& grid,
                   const Vec<2>& a,
                   const Vec<2>& b,
-                  spark::particle::CollisionHit& hit) {
+                  CollisionHit& hit) {
     hit.val = 0;
     FLOOR_F(current_index_x, a.x)
     FLOOR_F(current_index_y, a.y)
@@ -201,13 +208,12 @@ void TiledBoundary2D::set_distance_cells() {
     }
 }
 
-void TiledBoundary2D::apply(Species<2, 3>& species) {
+void TiledBoundary2D::apply(Species<2, 3>& species, const Callback& collision_callback) {
     int n = species.n();
     auto* x = species.x();
     auto* v = species.v();
 
     for (int i = 0; i < n; ++i) {
-	
         auto& x1 = x[i];
 
         if (empty_box_ && (x1.x > 0 && x1.x < gprop_.l.x && x1.y > 0 && x1.y < gprop_.l.y))
@@ -246,7 +252,13 @@ void TiledBoundary2D::apply(Species<2, 3>& species) {
             if (!hit.val)
                 break;
 
-            const auto btype = boundaries_[hit.val - 1].boundary_type;
+            const auto& b = boundaries_[hit.val - 1];
+            const auto btype = b.boundary_type;
+
+            if (collision_callback) {
+                collision_callback(hit.val - 1, x1, v1);
+            }
+
             if (btype == BoundaryType::Absorbing) {
                 // TODO(lui): Check if this is OK
                 species.remove(i);

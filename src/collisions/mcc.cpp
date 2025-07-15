@@ -98,7 +98,7 @@ template <unsigned NX, unsigned NV>
 MCCReactionSet<NX, NV>::MCCReactionSet(particle::ChargedSpecies<NX, NV>* projectile,
                                        ReactionConfig<NX, NV>&& config)
     : projectile_(projectile), config_(std::move(config)) {
-    max_sigma_v_ = max_sigmav(config_.reactions, projectile_->m(),
+    max_sigma_v_ = max_sigmav(*config_.reactions, projectile_->m(),
                               config_.dyn == RelativeDynamics::SlowProjectile);
 }
 
@@ -118,6 +118,7 @@ void MCCReactionSet<NX, NV>::react_all() {
     // TODO(lui): Remove this static variable and use another cache method that avoids global state.
     static std::vector<size_t> to_be_removed_cache;
     to_be_removed_cache.resize(0);
+    auto& reactions = *config_.reactions;
 
     for (size_t p_idx : samples) {
         if (config_.dyn == RelativeDynamics::SlowProjectile) {
@@ -140,7 +141,7 @@ void MCCReactionSet<NX, NV>::react_all() {
 
         double dens_n = config_.target->dens_at(projectile_->x()[p_idx]);
 
-        for (const auto& reaction : config_.reactions) {
+        for (const auto& reaction : reactions) {
             fr0 = fr1;
             fr1 += collision_frequency(
                        dens_n,
