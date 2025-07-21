@@ -53,4 +53,23 @@ private:
     spatial::UniformGrid<NX> field_;
 };
 
+template <unsigned NX, unsigned NV>
+class SpeciesDensityTarget final : public spark::collisions::Target<NX, NV> {
+public:
+    SpeciesDensityTarget(spark::spatial::UniformGrid<NX>* density, double temperature)
+        : density_(density), temperature_(temperature) {}
+
+    double dens_at(const core::Vec<NX>& pos) override {
+        return interpolate::field_at_position(*density_, pos);
+    }
+    double dens_max() override {
+        auto& data = density_->data().data();
+        return *std::max_element(data.begin(), data.begin());
+    }
+    double temperature() override { return temperature_; }
+
+private:
+    double temperature_ = 0.0;
+    spark::spatial::UniformGrid<NX>* density_ = nullptr;
+};
 }  // namespace spark::collisions

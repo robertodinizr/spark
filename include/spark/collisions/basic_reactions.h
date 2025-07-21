@@ -207,4 +207,16 @@ private:
     double t_neutral_ = 0.0;
 };
 
+template <unsigned NX, unsigned NV>
+class SinkCollision final : public BasicCollision<NX, NV> {
+public:
+    using BasicCollision<NX, NV>::BasicCollision;
+
+    ReactionOutcome react(particle::ChargedSpecies<NX, NV>& projectile,
+                          size_t id,
+                          double kinetic_energy) override {
+        return ReactionOutcome::Collided | ReactionOutcome::ProjectileToBeRemoved;
+    }
+};
+
 }  // namespace spark::collisions::reactions
