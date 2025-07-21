@@ -176,6 +176,39 @@ public:
 };
 
 template <unsigned NX, unsigned NV>
+class ChargeExchangeWithRemovalCollision final : public BasicCollision<NX, NV> {
+public:
+    ChargeExchangeWithRemovalCollision(particle::ChargedSpecies<NX, NV>* target_species,
+                                       const double t_neutral,
+                                       BasicCollisionConfig config,
+                                       CrossSection&& cs)
+        : BasicCollision<NX, NV>(config, std::forward<CrossSection>(cs)),
+          target_species_(target_species),
+          t_neutral_(t_neutral) {};
+
+    ReactionOutcome react(particle::ChargedSpecies<NX, NV>& projectile,
+                          size_t id,
+                          double kinetic_energy) override {
+        const auto event_pos = projectile.x()[id];
+        const double ion_mass = target_species_->m();
+        const double neutral_temperature = t_neutral_;
+
+        target_species_->add(1, [event_pos, ion_mass, neutral_temperature](core::Vec<3>& v,
+                                                                           core::Vec<NX>& x) {
+            x = event_pos;
+            const double v_th = std::sqrt(spark::constants::kb * neutral_temperature / ion_mass);
+            v = {random::normal(0.0, v_th), random::normal(0.0, v_th), random::normal(0.0, v_th)};
+        });
+
+        return ReactionOutcome::Collided | ReactionOutcome::ProjectileToBeRemoved;
+    }
+
+private:
+    particle::ChargedSpecies<NX, NV>* target_species_ = nullptr;
+    double t_neutral_ = 0;
+};
+
+template <unsigned NX, unsigned NV>
 class ChargeExchangeDiffCollision final : public BasicCollision<NX, NV> {
 public:
     ChargeExchangeDiffCollision(particle::ChargedSpecies<NX, NV>* target_species,
