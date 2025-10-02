@@ -10,4 +10,9 @@ template <unsigned NX, unsigned NV>
 void move_particles(ChargedSpecies<NX, NV>& species,
                     const core::TMatrix<core::Vec<NX>, 1>& force,
                     double dt);
+
+template <unsigned NX, unsigned NV>
+void move_particles_cylindrical(ChargedSpecies<NX, NV>& species,
+                    const core::TMatrix<core::Vec<NX>, 1>& force,
+                    double dt);
 }
