@@ -52,7 +52,7 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-class CylindricalPoissonSolver2D {
+class CylindricalPoissonSolver {
 public:
     struct Region {
         CellType region_type = CellType::Internal;
@@ -65,11 +65,11 @@ public:
         core::Vec<2> dx;
     };
 
-    CylindricalPoissonSolver2D();
-    explicit CylindricalPoissonSolver2D(const DomainProp& prop, const std::vector<Region>& regions);
-    CylindricalPoissonSolver2D(CylindricalPoissonSolver2D&& other) noexcept;
-    CylindricalPoissonSolver2D& operator=(CylindricalPoissonSolver2D&& other) noexcept;
-    ~CylindricalPoissonSolver2D();
+    CylindricalPoissonSolver();
+    explicit CylindricalPoissonSolver(const DomainProp& prop, const std::vector<Region>& regions);
+    CylindricalPoissonSolver(CylindricalPoissonSolver&& other) noexcept;
+    CylindricalPoissonSolver& operator=(CylindricalPoissonSolver&& other) noexcept;
+    ~CylindricalPoissonSolver();
 
     void solve(core::Matrix<2>& out, const core::Matrix<2>& rho);
 
