@@ -79,6 +79,13 @@ struct TVec<T, 3> {
     }
 };
 
+template <typename T>
+inline TVec<T, 3> cross(const TVec<T, 3>& a, const TVec<T, 3>& b) {
+    return {a.y * b.z - a.z * b.y, 
+	    a.z * b.x - a.x * b.z, 
+	    a.x * b.y - a.y * b.x};
+}
+
 template <typename T, unsigned N>
 inline bool operator==(const TVec<T, N>& a, const TVec<T, N>& b) {
     if constexpr (N == 1) {
