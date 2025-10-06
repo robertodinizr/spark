@@ -144,8 +144,8 @@ void spark::particle::boris_mover(spark::particle::ChargedSpecies<NX, 3>& specie
             const double c = std::cos(dtheta);
             const double s = std::sin(dtheta);
 
-            const double vr_new = vr * c - vphi * s;
-            const double vphi_new = vr * s + vphi * c;
+            const double vr_new = vr * c + vphi * s;
+            const double vphi_new = -vr * s + vphi * c;
 
             v[i].y = vr_new;
             v[i].z = vphi_new;
