@@ -63,7 +63,8 @@ void field_at_particles(const spatial::TUniformGrid<T, 2>& field,
 template <typename T, unsigned NV>
 void field_at_particles_cylindrical(const spatial::TUniformGrid<T, 2>& field,
                         const particle::ChargedSpecies<2, NV>& species,
-                        TMatrix<T, 1>& out) {
+                        TMatrix<T, 1>& out, 
+                        const double r0) {
     const size_t n = species.n();
     out.resize({n});
 
@@ -79,7 +80,7 @@ void field_at_particles_cylindrical(const spatial::TUniformGrid<T, 2>& field,
         const auto xmesh_upper_right = xmesh_lower_left + 1.0;
         const auto idx = xmesh_lower_left.template to<size_t>();
 
-        double rj = xmesh_lower_left.y * dx.y;
+        double rj = r0 + xmesh_lower_left.y * dx.y;
 
         double f1 = (rj + 0.5 * (xp.y - xmesh_lower_left.y) * dx.y) / (rj + 0.5 * dx.y);
         double f2 = (rj + 0.5 * (xp.y - xmesh_lower_left.y + 1) * dx.y) / (rj + 0.5 * dx.y);
@@ -103,11 +104,11 @@ void spark::interpolate::field_at_particles(const spark::spatial::TUniformGrid<T
     ::field_at_particles(field, species, out);
 }
 template <typename T, unsigned NX, unsigned NV>
-void spark::interpolate::field_at_particles_cylindrical(
-    const spark::spatial::TUniformGrid<T, NX>& field,
-    const spark::particle::ChargedSpecies<NX, NV>& species,
-    core::TMatrix<T, 1>& out) {
-    ::field_at_particles_cylindrical(field, species, out);
+void spark::interpolate::field_at_particles_cylindrical(const spark::spatial::TUniformGrid<T, NX>& field,
+                                                        const spark::particle::ChargedSpecies<NX, NV>& species,
+                                                        core::TMatrix<T, 1>& out, 
+                                                        const double r0) {
+    ::field_at_particles_cylindrical(field, species, out, r0);
 }
 template <typename T, unsigned NX>
 T interpolate::field_at_position(const spatial::TUniformGrid<T, NX>& field, const Vec<NX>& pos) {
@@ -143,10 +144,10 @@ template void interpolate::field_at_particles(const spatial::TUniformGrid<Vec<2>
                                               const particle::ChargedSpecies<2, 3>& species,
                                               TMatrix<Vec<2>, 1>& out);
 
-template void interpolate::field_at_particles_cylindrical(
-    const spatial::TUniformGrid<Vec<2>, 2>& field,
-    const particle::ChargedSpecies<2, 3>& species,
-    TMatrix<Vec<2>, 1>& out);
+template void interpolate::field_at_particles_cylindrical(const spatial::TUniformGrid<Vec<2>, 2>& field,
+                                                          const particle::ChargedSpecies<2, 3>& species,
+                                                          TMatrix<Vec<2>, 1>& out, 
+                                                          const double r0);
 
 template double interpolate::field_at_position(const spatial::UniformGrid<2>& field,
                                                const core::Vec<2>& pos);

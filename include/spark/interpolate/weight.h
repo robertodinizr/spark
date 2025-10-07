@@ -8,6 +8,6 @@ template <class GridType, unsigned NX, unsigned NV>
 void weight_to_grid(const spark::particle::ChargedSpecies<NX, NV>& species, GridType& out);
 
 template <class GridType, unsigned NX, unsigned NV>
-void weight_to_grid_cylindrical(const spark::particle::ChargedSpecies<NX, NV>& species, GridType& out);
+void weight_to_grid_cylindrical(const spark::particle::ChargedSpecies<NX, NV>& species, GridType& out, const double r0);
 
 }

@@ -94,7 +94,8 @@ void weight_to_grid(const spark::particle::ChargedSpecies<2, NV>& species,
 
 template <unsigned NV>
 void weight_to_grid_cylindrical(const spark::particle::ChargedSpecies<2, NV>& species,
-                    spark::spatial::UniformGrid<2>& out) {
+                    spark::spatial::UniformGrid<2>& out,
+                    const double r0) {
     const auto n = species.n();
     auto* x = species.x();
 
@@ -121,7 +122,7 @@ void weight_to_grid_cylindrical(const spark::particle::ChargedSpecies<2, NV>& sp
         const double z_local = zp - jf;
         const double r_local = rp - kf;
 
-        double rj = k * out.dx().y;
+        double rj = r0 + k * out.dx().y;
 
         double f1 = (rj + 0.5 * r_local * out.dx().y) / (rj + 0.5 * out.dx().y);
         double f2 = (rj + 0.5 * (r_local + 1.0) * out.dx().y) / (rj + 0.5 * out.dx().y);
@@ -186,3 +187,4 @@ template void spark::interpolate::weight_to_grid_cylindrical(
 template void spark::interpolate::weight_to_grid_cylindrical(
     const spark::particle::ChargedSpecies<2, 3>& species,
     spark::spatial::UniformGrid<2>& out);
+    
