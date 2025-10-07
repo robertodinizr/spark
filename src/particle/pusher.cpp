@@ -57,27 +57,27 @@ void spark::particle::move_particles_cylindrical(spark::particle::ChargedSpecies
 
         const double r_old = x[i].y;
 
-        double vr = v[i].y;
-        double vphi = v[i].z;
+        double v_r = v[i].y;
+        double v_theta = v[i].z;
 
-        vr = v[i].y;
+        v_r = v[i].y;
 
-        double dtheta = 0.0;
+        double alpha = 0.0;
         if (std::abs(r_old) > 0.0) {
-            dtheta = vphi / r_old * dt;
+            alpha = v_theta / r_old * dt;
         } else {
-            vphi = 0.0;
+            v_theta = 0.0;
             v[i].z = 0.0;
-            dtheta = 0.0;
+            alpha = 0.0;
         }
-        const double c = std::cos(dtheta);
-        const double s = std::sin(dtheta);
+        const double cos = std::cos(alpha);
+        const double sin = std::sin(alpha);
 
-        const double vr_new = vr * c - vphi * s;
-        const double vphi_new = vr * s + vphi * c;
+        const double v_r_new = v_r * cos + v_theta * sin;
+        const double v_theta_new = -v_r * sin + v_theta * cos;
 
-        v[i].y = vr_new;
-        v[i].z = vphi_new;
+        v[i].y = v_r_new;
+        v[i].z = v_theta_new;
 
         x[i].y += v[i].y * dt;
 
@@ -98,10 +98,7 @@ void spark::particle::boris_mover(spark::particle::ChargedSpecies<NX, 3>& specie
     const double k = (species.q() * dt) / (2.0 * species.m());
 
     for (size_t i = 0; i < n; i++) {
-        // Half step update
         core::Vec<3> v_minus = v[i] + E[i] * k;
-
-        // Full step rotation
         core::Vec<3> v_plus;
     
         if (B[i].norm() == 0.0) {
@@ -118,37 +115,35 @@ void spark::particle::boris_mover(spark::particle::ChargedSpecies<NX, 3>& specie
         } else {
                 v_plus = v_minus;
         }
-        // Half step update
+
         v[i] = v_plus + E[i] * k;
 
         if (cylindrical) {
-            // Axial update
             if constexpr (NX >= 1) x[i].x += v[i].x * dt;
 
             double r_old = 0.0;
             if constexpr (NX >= 2) r_old = x[i].y;
 
-            // Radial and azimuthal velocities
-            double vr = v[i].y;
-            double vphi = v[i].z;
+            double v_r = v[i].y;
+            double v_omega = v[i].z;
 
-            double dtheta = 0.0;
+            double alpha = 0.0;
             if (r_old != 0.0) {
-                dtheta = vphi / r_old * dt;
+                alpha = v_omega / r_old * dt;
             } else {
-                vphi = 0.0;
+                v_omega = 0.0;
                 v[i].z = 0.0;
-                dtheta = 0.0;
+                alpha = 0.0;
             }
 
-            const double c = std::cos(dtheta);
-            const double s = std::sin(dtheta);
+            const double cos = std::cos(alpha);
+            const double sin = std::sin(alpha);
 
-            const double vr_new = vr * c + vphi * s;
-            const double vphi_new = -vr * s + vphi * c;
+            const double v_r_new = v_r * cos + v_omega * sin;
+            const double v_omega_new = -v_r * sin + v_omega * cos;
 
-            v[i].y = vr_new;
-            v[i].z = vphi_new;
+            v[i].y = v_r_new;
+            v[i].z = v_omega_new;
 
             if constexpr (NX >= 2) x[i].y += v[i].y * dt;
         } else {
