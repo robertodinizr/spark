@@ -165,8 +165,9 @@ void spark::interpolate::weight_to_grid(const spark::particle::ChargedSpecies<NX
 template <class GridType, unsigned NX, unsigned NV>
 void spark::interpolate::weight_to_grid_cylindrical(
     const spark::particle::ChargedSpecies<NX, NV>& species,
-    GridType& out) {
-    ::weight_to_grid_cylindrical(species, out);
+    GridType& out,
+    const double r0) {
+    ::weight_to_grid_cylindrical(species, out, r0);
 }
 
 template void spark::interpolate::weight_to_grid(
@@ -183,8 +184,9 @@ template void spark::interpolate::weight_to_grid(
     spark::spatial::UniformGrid<2>& out);
 template void spark::interpolate::weight_to_grid_cylindrical(
     const spark::particle::ChargedSpecies<2, 1>& species,
-    spark::spatial::UniformGrid<2>& out);
+    spark::spatial::UniformGrid<2>& out,
+    const double r0);
 template void spark::interpolate::weight_to_grid_cylindrical(
     const spark::particle::ChargedSpecies<2, 3>& species,
-    spark::spatial::UniformGrid<2>& out);
-    
+    spark::spatial::UniformGrid<2>& out,
+    const double r0);
