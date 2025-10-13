@@ -26,6 +26,7 @@ add_library(spark STATIC
         src/interpolate/weight.cpp
         src/interpolate/field.cpp
         src/em/struct_poisson.cpp
+        src/em/cylindrical_poisson.cpp
         src/collisions/mcc.cpp
         src/collisions/scattering.cpp
         src/em/thomas_poisson.cpp

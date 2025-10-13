@@ -1,6 +1,6 @@
 include(cmake/cpm.cmake)
 
-CPMAddPackage("gh:luihabl/parallel-hashmap#master")
+CPMAddPackage("gh:greg7mdp/parallel-hashmap#master")
 
 CPMAddPackage(
         NAME hypre
